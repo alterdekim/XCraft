@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+    <div class="bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+        <h2 class="text-2xl font-semibold text-gray-700">Select Minecraft Version</h2>
+
+        <!-- Version Dropdown -->
+        <select id="mc-version" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="latest">Latest Release</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.18.2">1.18.2</option>
+            <option value="1.16.5">1.16.5</option>
+            <option value="1.12.2">1.12.2 (Modding)</option>
+        </select>
+
+        <!-- Play Button -->
+        <button onclick="selectVersion()" 
+            class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+            ▶ Play Minecraft
+        </button>
+
+        <!-- Back to Launcher -->
+        <button onclick="goBack()" 
+            class="mt-3 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+            ⬅ Back to Launcher
+        </button>
+
+        <p class="mt-4 text-sm text-gray-500">Minecraft Launcher v1.0</p>
+    </div>
+
+    <script>
+        function selectVersion() {
+            const version = document.getElementById('mc-version').value;
+            alert(Launching Minecraft ${version});
+        }
+
+        function goBack() {
+            alert("Returning to Launcher...");
+        }
+    </script>
+
+</body>
+</html>

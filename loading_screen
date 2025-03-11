@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Minecraft</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+    <div class="bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+        <h2 class="text-2xl font-semibold text-gray-700">Launching Minecraft</h2>
+
+        <!-- Loading Status -->
+        <p id="loading-text" class="mt-2 text-gray-500">Preparing...</p>
+
+        <!-- Progress Bar -->
+        <div class="mt-4 w-full bg-gray-200 rounded-full">
+            <div id="progress-bar" class="h-4 bg-green-500 rounded-full transition-all" style="width: 0%;"></div>
+        </div>
+
+        <!-- Cancel Button -->
+        <button onclick="cancelLaunch()" 
+            class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition">
+            ❌ Cancel
+        </button>
+
+        <p class="mt-4 text-sm text-gray-500">Minecraft Launcher v1.0</p>
+    </div>
+
+    <script>
+        let progress = 0;
+        function updateProgress() {
+            progress += 10;
+            document.getElementById("progress-bar").style.width = progress + "%";
+            document.getElementById("loading-text").innerText = Loading... ${progress}%;
+
+            if (progress < 100) {
+                setTimeout(updateProgress, 500);
+            } else {
+                window.location.href = "logs.html"; // Redirect to logs screen when done
+            }
+        }
+
+        function cancelLaunch() {
+            alert("Minecraft launch canceled.");
+            window.location.href = "index.html"; // Go back to launcher
+        }
+
+        setTimeout(updateProgress, 1000);
+    </script>
+
+</body>
+</html>

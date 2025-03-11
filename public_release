@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Launcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+    <div class="bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+        <h1 class="text-2xl font-semibold text-gray-700">Minecraft Launcher</h1>
+
+        <!-- Version Selection -->
+        <label class="block mt-4 text-gray-600">Select Version:</label>
+        <select id="mc-version" class="mt-2 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="latest">Latest Release</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.18.2">1.18.2</option>
+            <option value="1.16.5">1.16.5</option>
+            <option value="1.12.2">1.12.2 (Modding)</option>
+        </select>
+
+        <!-- Download Button -->
+        <button onclick="downloadVersion()" 
+            class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+            ⬇ Download Version
+        </button>
+
+        <!-- OR Divider -->
+        <div class="mt-4 text-gray-500 text-sm">or</div>
+
+        <!-- Add MultiMC Instance -->
+        <button onclick="addMultiMCInstance()" 
+            class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+            ➕ Add MultiMC Instance
+        </button>
+
+        <!-- Navigation Buttons -->
+        <div class="mt-6 flex gap-2">
+            <button onclick="goToSettings()" 
+                class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                ⚙ Settings
+            </button>
+            <button onclick="goToLogin()" 
+                class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                🔑 Login
+            </button>
+        </div>
+
+        <p class="mt-4 text-sm text-gray-500">Minecraft Launcher v1.0</p>
+    </div>
+
+    <script>
+        function downloadVersion() {
+            const version = document.getElementById("mc-version").value;
+            alert(Downloading Minecraft ${version}...);
+            // In Rust, this should trigger the actual download.
+        }
+
+        function addMultiMCInstance() {
+            alert("Select a MultiMC instance folder.");
+            // In Rust, this should open a file picker.
+        }
+
+        function goToSettings() {
+            window.location.href = "settings.html";
+        }
+
+        function goToLogin() {
+            window.location.href = "login.html";
+        }
+    </script>
+
+</body>
+</html>
