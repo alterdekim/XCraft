@@ -73,8 +73,85 @@
         <p class="mt-4 text-sm text-gray-500">alterdekim</p>
     </div>
 
+    <div id="launcher-settings" class="ms-10 bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+        <h2 class="text-2xl font-semibold text-gray-700">Launcher Settings</h2>
+ 
+        <!-- Tabs -->
+        <div class="mt-4 flex justify-around text-gray-600">
+            <button onclick="showSection('launcher')" class="py-2 px-4 focus:text-green-500">🚀 Launcher</button>
+            <button onclick="showSection('minecraft')" class="py-2 px-4 focus:text-green-500">🎮 Minecraft</button>
+            <button onclick="showSection('java')" class="py-2 px-4 focus:text-green-500"><i class="fa fa-fan"></i> Java</button>
+            <button onclick="showSection('versions')" class="py-2 px-4 focus:text-green-500">📦 Versions</button>
+        </div>
+ 
+        <!-- Sections -->
+        <div id="launcher" class="mt-4">
+            <h3 class="text-lg font-semibold text-gray-700">🚀 Launcher Settings</h3>
+            <label class="block mt-3 text-gray-600">Auto-update:</label>
+            <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option>Enabled</option>
+                <option>Disabled</option>
+            </select>
+ 
+            <label class="block mt-3 text-gray-600">UI Theme:</label>
+            <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                <option>Light</option>
+                <option>Dark</option>
+            </select>
+        </div>
+ 
+        <div id="minecraft" class="mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">🎮 Minecraft Settings</h3>
+            <label class="block mt-3 text-gray-600">Game Directory:</label>
+            <input type="text" placeholder="/path/to/minecraft" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+ 
+            <label class="block mt-3 text-gray-600">RAM Allocation:</label>
+            <input type="range" min="1024" max="16384" step="512" class="w-full">
+ 
+            <label class="block mt-3 text-gray-600">Enable Mods:</label>
+            <input type="checkbox" class="ml-2">
+        </div>
+ 
+        <div id="java" class="mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">☕ Java Settings</h3>
+            <label class="block mt-3 text-gray-600">Java Path:</label>
+            <input type="text" placeholder="/path/to/java" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+ 
+            <label class="block mt-3 text-gray-600">Custom JVM Arguments:</label>
+            <textarea class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" rows="2">-Xmx4G -Xms2G</textarea>
+        </div>
+ 
+        <div id="versions" class="mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700">📦 Version Settings</h3>
+            <label class="block mt-3 text-gray-600">Show Experimental Versions:</label>
+            <input type="checkbox" class="ml-2">
+ 
+            <label class="block mt-3 text-gray-600">Show Snapshots:</label>
+            <input type="checkbox" class="ml-2">
+        </div>
+ 
+        <!-- Save & Back Buttons -->
+        <div class="mt-6 flex gap-2">
+            <button onclick="saveSettings()" 
+                class="w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                💾 Save
+            </button>
+            <button onclick="goBack()" 
+                class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                ⬅ Back
+            </button>
+        </div>
+ 
+        <p class="mt-4 text-sm text-gray-500">Minecraft Launcher v1.0</p>
+    </div>
+
 
     <script>
+
+        function goToSettings() {
+            document.getElementById('launcher-settings').classList.remove('hidden');
+        }
+
         function showPlayScreen() {
             window.ipc.postMessage("show_play_screen");
         }
