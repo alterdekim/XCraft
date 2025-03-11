@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Launcher - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+
+    <!-- Container -->
+    <div id="login-screen" class="bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+        <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
+
+        <!-- Username -->
+        <input type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+
+        <!-- Password -->
+        <!-- <input type="password" placeholder="Password" class="mt-3 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> -->
+
+        <!-- Sign In Button -->
+        <button onclick="showAccountSettings()" 
+            class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+            Sign In
+        </button>
+
+        <!-- Footer -->
+        <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+    </div>
+
+    <div id="main-screen" class="bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+        <h1 class="text-2xl font-semibold text-gray-700">Minecraft Launcher</h1>
+
+        <!-- Version Selection -->
+        <label class="block mt-4 text-gray-600">Select Version:</label>
+        <select id="mc-version" class="mt-2 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="latest">Latest Release</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.18.2">1.18.2</option>
+            <option value="1.16.5">1.16.5</option>
+            <option value="1.12.2">1.12.2 (Modding)</option>
+        </select>
+
+        <!-- Download Button -->
+        <button onclick="downloadVersion()" 
+            class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+            <i class="fa-solid fa-download"></i> Download Version
+        </button>
+
+        <!-- OR Divider -->
+        <div class="mt-4 text-gray-500 text-sm">or</div>
+
+        <!-- Add MultiMC Instance -->
+        <button onclick="addMultiMCInstance()" 
+            class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+            <i class="fa-solid fa-file-zipper"></i> Add MultiMC Instance
+        </button>
+
+        <!-- Navigation Buttons -->
+        <div class="mt-6 flex gap-2">
+            <button onclick="goToSettings()" 
+                class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                <i class="fa-solid fa-gear"></i> Settings
+            </button>
+            <button onclick="showLoginScreen()" 
+                class="w-1/2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                <i class="fa-solid fa-key"></i> Logout
+            </button>
+        </div>
+
+        <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+    </div>
+
+
+    <script>
+        function showPlayScreen() {
+            window.ipc.postMessage("show_play_screen");
+        }
+
+        function showAccountSettings() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+    </script>
+
+</body>
+</html>
