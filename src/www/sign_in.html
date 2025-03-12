@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Launcher - Login</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -78,15 +79,15 @@
  
         <!-- Tabs -->
         <div class="mt-4 flex justify-around text-gray-600">
-            <button onclick="showSection('launcher')" class="py-2 px-4 focus:text-green-500">🚀 Launcher</button>
-            <button onclick="showSection('minecraft')" class="py-2 px-4 focus:text-green-500">🎮 Minecraft</button>
-            <button onclick="showSection('java')" class="py-2 px-4 focus:text-green-500"><i class="fa fa-fan"></i> Java</button>
-            <button onclick="showSection('versions')" class="py-2 px-4 focus:text-green-500">📦 Versions</button>
+            <button onclick="showSection('launcher')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i> Launcher</button>
+            <button onclick="showSection('minecraft')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-gamepad"></i> Minecraft</button>
+            <button onclick="showSection('java')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i> Java</button>
+            <button onclick="showSection('versions')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-cube"></i> Versions</button>
         </div>
  
         <!-- Sections -->
-        <div id="launcher" class="mt-4">
-            <h3 class="text-lg font-semibold text-gray-700">🚀 Launcher Settings</h3>
+        <div id="launcher" class="settings-tab mt-4">
+            <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-rocket"></i> Launcher Settings</h3>
             <label class="block mt-3 text-gray-600">Auto-update:</label>
             <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
                 <option>Enabled</option>
@@ -100,8 +101,8 @@
             </select>
         </div>
  
-        <div id="minecraft" class="mt-4 hidden">
-            <h3 class="text-lg font-semibold text-gray-700">🎮 Minecraft Settings</h3>
+        <div id="minecraft" class="settings-tab mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-gamepad"></i> Minecraft Settings</h3>
             <label class="block mt-3 text-gray-600">Game Directory:</label>
             <input type="text" placeholder="/path/to/minecraft" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
  
@@ -112,8 +113,8 @@
             <input type="checkbox" class="ml-2">
         </div>
  
-        <div id="java" class="mt-4 hidden">
-            <h3 class="text-lg font-semibold text-gray-700">☕ Java Settings</h3>
+        <div id="java" class="settings-tab mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-mug-hot"></i> Java Settings</h3>
             <label class="block mt-3 text-gray-600">Java Path:</label>
             <input type="text" placeholder="/path/to/java" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
  
@@ -121,8 +122,8 @@
             <textarea class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" rows="2">-Xmx4G -Xms2G</textarea>
         </div>
  
-        <div id="versions" class="mt-4 hidden">
-            <h3 class="text-lg font-semibold text-gray-700">📦 Version Settings</h3>
+        <div id="versions" class="settings-tab mt-4 hidden">
+            <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-cube"></i> Version Settings</h3>
             <label class="block mt-3 text-gray-600">Show Experimental Versions:</label>
             <input type="checkbox" class="ml-2">
  
@@ -148,22 +149,33 @@
 
     <script>
 
-        function goToSettings() {
-            document.getElementById('launcher-settings').classList.remove('hidden');
+        function showSection(section) {
+            $(".settings-tab").each(function(i, d) {
+                $(d).addClass('hidden');
+            });
+            $("#"+section).removeClass('hidden');
         }
 
-        function showPlayScreen() {
+        function goBack() {
+            $("#launcher-settings").addClass('hidden');
+        }
+
+        function goToSettings() {
+            $("#launcher-settings").removeClass('hidden');
+        }
+
+        function downloadVersion() {
             window.ipc.postMessage("show_play_screen");
         }
 
         function showAccountSettings() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
+            $("#main-screen").removeClass('hidden');
+            $("#login-screen").addClass('hidden');
         }
 
         function showLoginScreen() {
-            document.getElementById('main-screen').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
+            $("#main-screen").addClass('hidden');
+            $("#login-screen").removeClass('hidden');
         }
     </script>
 

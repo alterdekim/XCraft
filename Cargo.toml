@@ -7,3 +7,4 @@ edition = "2024"
 winit = "0.30.9"
 wry = "0.50.4"
 tokio = { version = "1", features = ["full"] }
+dirs = "6.0.0"
