@@ -10,7 +10,7 @@ use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
 use winit::window::{Window, WindowId};
 use winit::event_loop::ActiveEventLoop;
 use wry::dpi::LogicalSize;
-use wry::http::Request;
+use wry::http::{Request, Response};
 use wry::{WebView, WebViewBuilder, WebViewBuilderExtWindows};
 
 mod config;
@@ -25,6 +25,7 @@ enum UIAction {
 #[derive(Default)]
 struct App {
   window: Option<Window>,
+  webview: Option<WebView>
 }
 
 impl ApplicationHandler for App {
@@ -32,8 +33,13 @@ impl ApplicationHandler for App {
     let window = event_loop.create_window(Window::default_attributes().with_inner_size(LogicalSize::new(900, 600)).with_min_inner_size(LogicalSize::new(900, 600)).with_title("XCraft")).unwrap();
     let webview = WebViewBuilder::new()
       .with_html(include_str!("www/portable.html"))
-      .with_ipc_handler(|request| {
-        SENDER.lock().unwrap().as_ref().unwrap().send(request);
+      .with_asynchronous_custom_protocol("xcraft".into(), move |wid, request, responder| {
+          let uri = request.uri().to_string();
+          println!("GOTCHA");
+          let response = "yeeah!".as_bytes();
+          tokio::spawn(async move {
+            responder.respond(Response::new(response));
+          });
       })  
       .build(&window)
       .unwrap();
@@ -41,8 +47,7 @@ impl ApplicationHandler for App {
     
 
     self.window = Some(window);
-
-    self.launcher_start(Arc::new(webview));
+    self.webview = Some(webview);
   }
 
   fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
@@ -52,21 +57,6 @@ impl ApplicationHandler for App {
             },
             _ => {}
         }
-  }
-}
-
-impl App {
-  fn launcher_start(&mut self, webview: Arc<WebView>) {
-    tokio::spawn(async move {
-      let (sender_gui, mut receiver_gui) = mpsc::unbounded_channel();
-      *SENDERGUI.lock().unwrap() = Some(sender_gui);
-      loop {
-        if let Some(action) = receiver_gui.recv().await {
-            println!("YUPPIE");
-            webview.evaluate_script("alert('done')");
-        }
-      }
-    });
   }
 }
 

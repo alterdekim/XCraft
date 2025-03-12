@@ -318,8 +318,12 @@
 
       <script type="text/javascript">
 
-          function runPortable() {
+          async function runPortable() {
             window.ipc.postMessage("run_portable");
+
+            let response = await fetch('xcraft://data/fetch.json');
+            let data = await response.body;
+            alert(data);
           }
 
           function installMinecraft() {
