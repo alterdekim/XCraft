@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
 
 use config::LauncherConfig;
+use launcher::Launcher;
+use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use winit::application::ApplicationHandler;
@@ -11,15 +13,17 @@ use winit::window::{Window, WindowId};
 use winit::event_loop::ActiveEventLoop;
 use wry::dpi::LogicalSize;
 use wry::http::{Request, Response};
-use wry::{WebView, WebViewBuilder, WebViewBuilderExtWindows};
+use wry::{RequestAsyncResponder, WebView, WebViewBuilder, WebViewBuilderExtWindows};
 
 mod config;
+mod launcher;
+mod util;
 
-static SENDER: Mutex<Option<UnboundedSender<Request<String>>>> = Mutex::new(None);
-static SENDERGUI: Mutex<Option<UnboundedSender<UIAction>>> = Mutex::new(None);
+static SENDER: Mutex<Option<UnboundedSender<(String, Option<UIMessage>, RequestAsyncResponder)>>> = Mutex::new(None);
 
-enum UIAction {
-  DoSomething
+#[derive(Serialize, Deserialize)]
+struct UIMessage {
+    params: Vec<String>
 }
 
 #[derive(Default)]
@@ -32,15 +36,16 @@ impl ApplicationHandler for App {
   fn resumed(&mut self, event_loop: &ActiveEventLoop) {
     let window = event_loop.create_window(Window::default_attributes().with_inner_size(LogicalSize::new(900, 600)).with_min_inner_size(LogicalSize::new(900, 600)).with_title("XCraft")).unwrap();
     let webview = WebViewBuilder::new()
-      .with_html(include_str!("www/portable.html"))
       .with_asynchronous_custom_protocol("xcraft".into(), move |wid, request, responder| {
           let uri = request.uri().to_string();
-          println!("GOTCHA");
-          let response = "yeeah!".as_bytes();
-          tokio::spawn(async move {
-            responder.respond(Response::new(response));
-          });
-      })  
+          println!("Body: {}", String::from_utf8(request.body().to_vec()).unwrap());
+          if let Ok(msg) = serde_json::from_slice(request.body()) {
+            let _ = SENDER.lock().unwrap().as_ref().unwrap().send((uri, Some(msg), responder));
+            return;
+          }
+          let _ = SENDER.lock().unwrap().as_ref().unwrap().send((uri, None, responder));
+      })
+      .with_url("xcraft://custom/ui")  
       .build(&window)
       .unwrap();
 
@@ -62,21 +67,49 @@ impl ApplicationHandler for App {
 
 #[tokio::main]
 async fn main() {
-  let (snd, mut receiver) = mpsc::unbounded_channel();
-
-    *SENDER.lock().unwrap() = Some(snd);
-
     let event_loop = EventLoop::new().unwrap();
     let mut app = App::default();
 
     let rt = Runtime::new().unwrap();
 
     rt.spawn(async move {
+        let (snd, mut receiver) = mpsc::unbounded_channel();
+        *SENDER.lock().unwrap() = Some(snd);
+
+        let mut launcher = Launcher::default();
+
         loop {
-          if let Some(request) = receiver.recv().await {
-              println!("Request: {}", request.body());
-              SENDERGUI.lock().unwrap().as_ref().unwrap().send(UIAction::DoSomething);
-          }
+            if let Some((ui_action, params, responder)) = receiver.recv().await {
+               println!("Command: {}", ui_action);
+               println!("params: {}", params.is_some());
+               
+                let ui_action = &ui_action[16..];
+                match ui_action {
+                    "ui" => responder.respond(Response::new(include_str!("www/portable.html").as_bytes())),
+                    "portable" => {
+                        launcher.config.set_portable(true);
+                        launcher.init_dirs();
+                    }
+                    "installation" => {
+                        launcher.init_dirs();
+                    }
+                    "check_installation" => {
+                        if launcher.is_portable() {
+                            launcher.config.set_portable(true);
+                            launcher.init_dirs();
+                            if !launcher.is_config_exist() {
+                                responder.respond(Response::new("show_login".as_bytes()))
+                            } else {
+                                responder.respond(Response::new("show_add".as_bytes()))
+                            }
+                        }
+                    }
+                    "sign_up" => {
+
+                    }
+                    _ => {}
+                }
+            }
         }
     });
 

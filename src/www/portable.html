@@ -3,12 +3,12 @@
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+      <script src=" https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js "></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
       <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="flex bg-gray-100 h-screen">
-      <div class="flex h-screen bg-white w-16 flex-col justify-between border-e border-gray-100 hidden">
+      <div id="sidebar" class="flex h-screen bg-white w-16 flex-col justify-between border-e border-gray-100 hidden">
           <div>
             <div class="inline-flex size-16 items-center justify-center">
               <a href="#" onclick="showSection(this, 'appearance')">
@@ -126,19 +126,17 @@
               <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
           </div>
 
-          <div id="login-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+        <div id="login-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
             <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
 
             <!-- Username -->
-            <input type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-
-            <!-- Password -->
-            <input type="password" placeholder="Password" class="mt-3 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <input id="sign_up_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
 
             <!-- Sign In Button -->
-            <button 
+            <button
+                onclick="signUp()"
                 class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                Sign In
+                Sign Up
             </button>
 
             <!-- Footer -->
@@ -317,20 +315,26 @@
       </div>
 
       <script type="text/javascript">
+          
+          
 
-          async function runPortable() {
-            window.ipc.postMessage("run_portable");
+          async function signUp() {
+            $.post({url: "sign_up", data: JSON.stringify({ params: [$("#sign_up_username").val()] }) }, function(r) {
+              if( r.startsWith("show_") ) {
+                showSection(undefined, r.substring(5));
+              }
+            })
+          }
 
-            let response = await fetch('xcraft://data/fetch.json');
-            let data = await response.body;
-            alert(data);
+          function runPortable() {
+            console.log($.get("portable", function() {}));
           }
 
           function installMinecraft() {
-            window.ipc.postMessage("run_stadalone");
           }
 
           function showSection(obj, section) {
+
               $(".menu-btn").each(function(i, d) {
                 $(d).removeClass('bg-green-50');
                 $(d).addClass('text-gray-500');
@@ -344,6 +348,16 @@
               });
               $("#"+section+"-section").removeClass('hidden');
           }
+
+          $( document ).ready(async function() {
+
+            $.get("check_installation", function(r) {
+              console.log(r);
+              if( r.startsWith("show_") ) {
+                showSection(undefined, r.substring(5));
+              }
+            })
+          });
       </script>
   </body>
 </html>

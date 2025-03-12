@@ -6,7 +6,6 @@ pub struct LauncherConfig {
 }
 
 impl LauncherConfig {
-
     pub fn set_portable(&mut self, is_portable: bool) {
         self.is_portable = is_portable;
     }
@@ -17,10 +16,18 @@ impl LauncherConfig {
             false => get_absolute_launcher_dir()
         }
     }
+
+    pub fn config_path(&self) -> PathBuf {
+        let mut p = self.launcher_dir();
+        p.push("config.toml");
+        p
+    }
 }
 
-fn get_relative_launcher_dir() -> PathBuf {
-    std::env::current_dir().unwrap()
+pub fn get_relative_launcher_dir() -> PathBuf {
+    let mut p = std::env::current_dir().unwrap();
+    p.push("xcraft");
+    p
 }
 
 fn get_absolute_launcher_dir() -> PathBuf {
