@@ -1,8 +1,12 @@
 use std::path::PathBuf;
 
-#[derive(Default)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Serialize, Deserialize)]
 pub struct LauncherConfig {
-    is_portable: bool
+    is_portable: bool,
+    pub user_name: String,
+    pub user_secret: String
 }
 
 impl LauncherConfig {

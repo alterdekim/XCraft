@@ -84,7 +84,23 @@
                       </span>
                     </a>
                   </li>
+                  
+                  <li>
+                    <a
+                      href="#"
+                      onclick="showSection(this, 'screenshots')"
+                      class="menu-btn group relative flex justify-center rounded-sm px-2 py-1.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                    >
+                    <i class="fa-solid fa-image"></i>
         
+                      <span
+                        class="invisible absolute start-full top-1/2 ms-4 -translate-y-1/2 rounded-sm bg-gray-900 px-2 py-1.5 text-xs font-medium text-white group-hover:visible"
+                      >
+                        Screenshots
+                      </span>
+                    </a>
+                  </li>
+
                   <li>
                     <a
                       href="#"
@@ -130,8 +146,8 @@
             <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
 
             <!-- Username -->
-            <input id="sign_up_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-
+            <input id="sign_up_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> <!-- bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-2 focus:ring-red-500 -->
+            <p class="mt-2 text-sm text-red-600 dark:text-red-500 text-left hidden">Username has invalid characters or too short</p>
             <!-- Sign In Button -->
             <button
                 onclick="signUp()"
@@ -316,21 +332,29 @@
 
       <script type="text/javascript">
           
-          
-
-          async function signUp() {
-            $.post({url: "sign_up", data: JSON.stringify({ params: [$("#sign_up_username").val()] }) }, function(r) {
-              if( r.startsWith("show_") ) {
-                showSection(undefined, r.substring(5));
+          function processParams(r) {
+            let params = JSON.parse(r).params;
+            for( let i = 0; i < params.length; i++ ) {
+              if( params[i].startsWith("show_") ) {
+                showSection(undefined, params[i].substring(5));
+              } else if( params[i] == "sidebar_on" ) {
+                $("#sidebar").removeClass('hidden');
+              } else if( params[i] == "sidebar_off") {
+                $("#sidebar").addClass('hidden');
               }
-            })
+            }
+          }
+
+          function signUp() {
+            $.post({url: "sign_up", data: JSON.stringify({ params: [$("#sign_up_username").val()] }) }, processParams)
           }
 
           function runPortable() {
-            console.log($.get("portable", function() {}));
+            console.log($.get("portable", processParams));
           }
 
           function installMinecraft() {
+            console.log($.get("installation", processParams));
           }
 
           function showSection(obj, section) {
@@ -350,13 +374,7 @@
           }
 
           $( document ).ready(async function() {
-
-            $.get("check_installation", function(r) {
-              console.log(r);
-              if( r.startsWith("show_") ) {
-                showSection(undefined, r.substring(5));
-              }
-            })
+            $.get("check_installation", processParams)
           });
       </script>
   </body>

@@ -1,3 +1,5 @@
+use core::str;
+
 use crate::config::LauncherConfig;
 
 
@@ -14,6 +16,24 @@ impl Launcher {
 
     pub fn is_config_exist(&self) -> bool {
         self.config.config_path().exists()
+    }
+
+    pub fn load_config(&mut self) {
+        if self.is_config_exist() {
+            self.config = toml::from_str(
+                str::from_utf8(&std::fs::read(self.config.config_path()).unwrap()).unwrap()).unwrap();
+        }
+    }
+
+    pub fn save_config(&self) {
+        std::fs::write(self.config.config_path(), toml::to_string_pretty(&self.config).unwrap());
+    }
+
+    pub fn init_config(&mut self, user_name: String) {
+        self.load_config();
+        self.config.user_name = user_name;
+        self.config.user_secret = crate::util::random_string(32);
+        self.save_config();
     }
 
     pub fn init_dirs(&self) {

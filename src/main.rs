@@ -38,7 +38,6 @@ impl ApplicationHandler for App {
     let webview = WebViewBuilder::new()
       .with_asynchronous_custom_protocol("xcraft".into(), move |wid, request, responder| {
           let uri = request.uri().to_string();
-          println!("Body: {}", String::from_utf8(request.body().to_vec()).unwrap());
           if let Ok(msg) = serde_json::from_slice(request.body()) {
             let _ = SENDER.lock().unwrap().as_ref().unwrap().send((uri, Some(msg), responder));
             return;
@@ -89,23 +88,27 @@ async fn main() {
                     "portable" => {
                         launcher.config.set_portable(true);
                         launcher.init_dirs();
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_login".to_string()] }).unwrap()))
                     }
                     "installation" => {
                         launcher.init_dirs();
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_login".to_string()] }).unwrap()))
                     }
                     "check_installation" => {
                         if launcher.is_portable() {
                             launcher.config.set_portable(true);
                             launcher.init_dirs();
                             if !launcher.is_config_exist() {
-                                responder.respond(Response::new("show_login".as_bytes()))
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_login".to_string()] }).unwrap()))
                             } else {
-                                responder.respond(Response::new("show_add".as_bytes()))
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_add".to_string(), "sidebar_on".to_string()] }).unwrap()))
                             }
                         }
                     }
                     "sign_up" => {
-
+                        let user_name = params.as_ref().unwrap().params.get(0).unwrap();
+                        launcher.init_config(user_name.to_string());
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_add".to_string(), "sidebar_on".to_string()] }).unwrap()));
                     }
                     _ => {}
                 }
