@@ -12,12 +12,13 @@ use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
 use winit::window::{Window, WindowId};
 use winit::event_loop::ActiveEventLoop;
 use wry::dpi::LogicalSize;
-use wry::http::{Request, Response};
+use wry::http::{version, Request, Response};
 use wry::{RequestAsyncResponder, WebView, WebViewBuilder, WebViewBuilderExtWindows};
 
 mod config;
 mod launcher;
 mod util;
+mod minecraft;
 
 static SENDER: Mutex<Option<UnboundedSender<(String, Option<UIMessage>, RequestAsyncResponder)>>> = Mutex::new(None);
 
@@ -47,8 +48,6 @@ impl ApplicationHandler for App {
       .with_url("xcraft://custom/ui")  
       .build(&window)
       .unwrap();
-
-    
 
     self.window = Some(window);
     self.webview = Some(webview);
@@ -109,6 +108,35 @@ async fn main() {
                         let user_name = params.as_ref().unwrap().params.get(0).unwrap();
                         launcher.init_config(user_name.to_string());
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_add".to_string(), "sidebar_on".to_string()] }).unwrap()));
+                    }
+                    "fetch_official_versions" => {
+                        if let Ok(versions) = crate::minecraft::versions::fetch_versions_list().await {
+                            let versions: Vec<String> = versions.versions.iter().map(|t| t.id.clone()).collect();
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [ vec!["set_downloadable_versions".to_string()], versions ].concat() }).unwrap()));
+                        } else {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: Vec::new() }).unwrap()));
+                        }
+                    }
+                    "download_vanilla" => {
+                        let version = params.unwrap().params[0].clone();
+                        println!("Version: {}", version);
+                        if let Ok(versions) = crate::minecraft::versions::fetch_versions_list().await {
+                            println!("Got versions");
+                            let version = versions.versions.iter().find(|t| t.id.clone() == version);
+                            if let Some(version) = version {
+                                println!("Found");
+                                match crate::minecraft::versions::fetch_version_object(version).await {
+                                    Ok(config ) => {
+                                        println!("Config: {}", config.id);
+                                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string()] }).unwrap()));
+                                        launcher.new_vanilla_instance(config).await;
+                                    }
+                                    Err(e) => {
+                                        println!("Error: {}", e);
+                                    }
+                                }
+                            }
+                        }
                     }
                     _ => {}
                 }

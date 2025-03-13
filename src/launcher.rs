@@ -1,6 +1,6 @@
 use core::str;
 
-use crate::config::LauncherConfig;
+use crate::{config::LauncherConfig, minecraft::versions::VersionConfig};
 
 
 #[derive(Default)]
@@ -34,6 +34,15 @@ impl Launcher {
         self.config.user_name = user_name;
         self.config.user_secret = crate::util::random_string(32);
         self.save_config();
+    }
+
+    pub async fn new_vanilla_instance(&self, config: VersionConfig) {
+        let root = self.config.launcher_dir();
+        let mut instances = root.clone();
+        instances.push("instances");
+        instances.push(config.id);
+
+        std::fs::create_dir_all(instances);
     }
 
     pub fn init_dirs(&self) {

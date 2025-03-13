@@ -6,6 +6,10 @@
       <script src=" https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js "></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
       <script src="https://cdn.tailwindcss.com"></script>
+      <style>
+         ::-webkit-scrollbar { display: none; }
+         body { overflow: hidden; }
+      </style>
   </head>
   <body class="flex bg-gray-100 h-screen">
       <div id="sidebar" class="flex h-screen bg-white w-16 flex-col justify-between border-e border-gray-100 hidden">
@@ -122,25 +126,70 @@
           </div>
         </div>
 
-      <div class="flex justify-center items-center w-screen h-screen">
-          <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
-              <h1 class="text-2xl font-semibold text-gray-700">Welcome to Minecraft Launcher</h1>
-              <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
-
-              <!-- Portable Mode -->
-              <button onclick="runPortable()"
-                  class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
-                  Run in Portable Mode
-              </button>
-              <p class="text-sm text-gray-500 mt-1">No installation required. Saves everything in a local folder.</p>
-
-              <!-- Installation Mode -->
-              <button onclick="installMinecraft()"
-                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                  Install Minecraft
-              </button>
-              <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
+      <div class="flex flex-col justify-center items-center">
+        
+      <div role="alert" class="mt-5 rounded-xl border border-gray-100 bg-white p-4 w-96 hidden">
+        <div class="flex items-start gap-4">
+          <span class="text-green-600">
+            <i class="fa-solid fa-info"></i>
+          </span>
+      
+          <div class="flex-1">
+            <strong class="block font-medium text-gray-900"> Changes saved </strong>
+      
+            <p class="mt-1 text-sm text-gray-700">Your product changes have been saved.</p>
           </div>
+      
+          <button class="text-gray-500 transition hover:text-gray-600">
+            <span class="sr-only">Dismiss popup</span>
+      
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+        
+      <div class="flex justify-center items-center w-screen h-screen">
+        <div id="loading-section" class="bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+            <h2 class="text-2xl font-semibold text-gray-700">Launching Minecraft</h2>
+    
+            <!-- Loading Status -->
+            <p id="loading-text" class="mt-2 text-gray-500">Preparing...</p>
+    
+            <!-- Progress Bar -->
+            <div class="mt-4 w-full bg-gray-200 rounded-full">
+                <div id="progress-bar" class="h-4 bg-green-500 rounded-full transition-all" style="width: 0%;"></div>
+            </div>
+    
+            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+        </div>
+
+        <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+            <h1 class="text-2xl font-semibold text-gray-700">Welcome to Minecraft Launcher</h1>
+            <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
+
+            <!-- Portable Mode -->
+            <button onclick="runPortable()"
+                class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                Run in Portable Mode
+            </button>
+            <p class="text-sm text-gray-500 mt-1">No installation required. Saves everything in a local folder.</p>
+
+            <!-- Installation Mode -->
+            <button onclick="installMinecraft()"
+                class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                Install Minecraft
+            </button>
+            <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
+        </div>
 
         <div id="login-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
             <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
@@ -165,16 +214,12 @@
             <!-- Version Selection -->
             <label class="block mt-4 text-gray-600">Select Version:</label>
             <select id="mc-version" class="mt-2 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <option value="latest">Latest Release</option>
-                <option value="1.20.1">1.20.1</option>
-                <option value="1.19.4">1.19.4</option>
-                <option value="1.18.2">1.18.2</option>
-                <option value="1.16.5">1.16.5</option>
-                <option value="1.12.2">1.12.2 (Modding)</option>
+               
             </select>
 
             <!-- Download Button -->
-            <button 
+            <button
+                onclick="downloadSelectedVersion()" 
                 class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
                 <i class="fa-solid fa-download"></i> Download Version
             </button>
@@ -328,6 +373,7 @@
             <div class="bg-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center text-3xl text-green-500 cursor-pointer hover:bg-green-500 hover:text-white"><i class="fa-solid fa-plus"></i></div>
           </div>
         </div>
+        </div>
       </div>
 
       <script type="text/javascript">
@@ -342,7 +388,29 @@
               } else if( params[i] == "sidebar_off") {
                 $("#sidebar").addClass('hidden');
               }
+
+              if( params[i] == "show_add" ) {
+                showAddSection();
+              } else if( params[i] == "set_downloadable_versions" ) {
+                setDownloadableVersions(params.slice(1));
+              }
             }
+          }
+
+          function downloadSelectedVersion() {
+            let version = $('#mc-version :selected').text();
+            $.post({url: "download_vanilla", data: JSON.stringify({ params: [version] })}, processParams);
+          }
+
+          function showAddSection() {
+            $.post({url: "fetch_official_versions" }, processParams);
+          }
+
+          function setDownloadableVersions(versions) {
+              $("#mc-version").html("");
+              for( let i = 0; i < versions.length; i++ ) {
+                $("#mc-version").append(new Option(versions[i], versions[i]));
+              }
           }
 
           function signUp() {
