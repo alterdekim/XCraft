@@ -13,7 +13,7 @@ use winit::window::{Window, WindowId};
 use winit::event_loop::ActiveEventLoop;
 use wry::dpi::LogicalSize;
 use wry::http::{version, Request, Response};
-use wry::{RequestAsyncResponder, WebView, WebViewBuilder, WebViewBuilderExtWindows};
+use wry::{RequestAsyncResponder, WebView, WebViewBuilder};
 
 mod config;
 mod launcher;
@@ -76,6 +76,8 @@ async fn main() {
 
         let mut launcher = Launcher::default();
 
+        let mut dl_rec = None;
+
         loop {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
                println!("Command: {}", ui_action);
@@ -129,13 +131,18 @@ async fn main() {
                                     Ok(config ) => {
                                         println!("Config: {}", config.id);
                                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string()] }).unwrap()));
-                                        launcher.new_vanilla_instance(config).await;
+                                        dl_rec = Some(launcher.new_vanilla_instance(config).await);
                                     }
                                     Err(e) => {
                                         println!("Error: {}", e);
                                     }
                                 }
                             }
+                        }
+                    }
+                    "check_download_status" => {
+                        if let Some((percent, text)) = dl_rec.unwrap().recv().await {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["update_downloads".to_string(), text, percent.to_string()] }).unwrap()));
                         }
                     }
                     _ => {}

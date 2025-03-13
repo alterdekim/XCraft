@@ -393,8 +393,19 @@
                 showAddSection();
               } else if( params[i] == "set_downloadable_versions" ) {
                 setDownloadableVersions(params.slice(1));
+                break;
+              } else if( params[i] == "update_downloads" ) {
+                  updateDownloads(params.slice(1));
+                  break;
               }
             }
+          }
+
+          function updateDownloads(params) {
+              let text = params[0];
+              let percentage = params[1];
+              $("#loading-text").html(text);
+              $("#progress-bar").css("width", percentage+"%");
           }
 
           function downloadSelectedVersion() {
@@ -414,7 +425,7 @@
           }
 
           function signUp() {
-            $.post({url: "sign_up", data: JSON.stringify({ params: [$("#sign_up_username").val()] }) }, processParams)
+              $.post({url: "sign_up", data: JSON.stringify({params: [$("#sign_up_username").val()]})}, processParams)
           }
 
           function runPortable() {
@@ -442,7 +453,11 @@
           }
 
           $( document ).ready(async function() {
-            $.get("check_installation", processParams)
+            $.get("check_installation", processParams);
+
+            setInterval(function() {
+                $.get("check_download_status", processParams);
+            }, 200);
           });
       </script>
   </body>
