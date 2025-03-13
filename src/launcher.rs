@@ -1,7 +1,7 @@
 use core::str;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
-use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
 
 #[derive(Default)]
@@ -37,7 +37,7 @@ impl Launcher {
         self.save_config();
     }
 
-    pub async fn new_vanilla_instance(&mut self, config: VersionConfig) -> UnboundedReceiver<(u8, String)> {
+    pub async fn new_vanilla_instance(&mut self, config: VersionConfig, sender: UnboundedSender<(u8, String)>) {
         let root = self.config.launcher_dir();
         let mut instances = root.clone();
         instances.push("instances");
@@ -47,18 +47,14 @@ impl Launcher {
 
         instances.push("client.jar");
 
-        let (sx, rx) = mpsc::unbounded_channel();
-
         let client_jar_url = config.downloads.client.url;
 
-        util::download_file(&client_jar_url, instances.to_str().unwrap(), config.downloads.client.size, sx);
+        util::download_file(&client_jar_url, instances.to_str().unwrap(), config.downloads.client.size, sender);
 
         /*for i in 0..config.libraries.len() {
             let library = &config.libraries[i];
 
         }*/
-
-        rx
     }
 
     pub fn init_dirs(&self) {

@@ -379,6 +379,7 @@
       <script type="text/javascript">
           
           function processParams(r) {
+              console.log("got", r);
             let params = JSON.parse(r).params;
             for( let i = 0; i < params.length; i++ ) {
               if( params[i].startsWith("show_") ) {

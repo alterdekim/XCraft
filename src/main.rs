@@ -76,7 +76,7 @@ async fn main() {
 
         let mut launcher = Launcher::default();
 
-        let mut dl_rec = None;
+        let (sx, mut dl_rec) = mpsc::unbounded_channel();
 
         loop {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
@@ -131,7 +131,7 @@ async fn main() {
                                     Ok(config ) => {
                                         println!("Config: {}", config.id);
                                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string()] }).unwrap()));
-                                        dl_rec = Some(launcher.new_vanilla_instance(config).await);
+                                        launcher.new_vanilla_instance(config, sx.clone()).await;
                                     }
                                     Err(e) => {
                                         println!("Error: {}", e);
@@ -141,8 +141,10 @@ async fn main() {
                         }
                     }
                     "check_download_status" => {
-                        if let Some((percent, text)) = dl_rec.unwrap().recv().await {
+                        if let Some((percent, text)) = dl_rec.recv().await {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["update_downloads".to_string(), text, percent.to_string()] }).unwrap()));
+                        } else {
+                            responder.respond(Response::new(vec![]));
                         }
                     }
                     _ => {}
