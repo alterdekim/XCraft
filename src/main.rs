@@ -80,9 +80,6 @@ async fn main() {
 
         loop {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
-               println!("Command: {}", ui_action);
-               println!("params: {}", params.is_some());
-               
                 let ui_action = &ui_action[16..];
                 match ui_action {
                     "ui" => responder.respond(Response::new(include_str!("www/portable.html").as_bytes())),
@@ -130,7 +127,7 @@ async fn main() {
                                 match crate::minecraft::versions::fetch_version_object(version).await {
                                     Ok(config ) => {
                                         println!("Config: {}", config.id);
-                                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string()] }).unwrap()));
+                                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string(), "sidebar_off".to_string()] }).unwrap()));
                                         launcher.new_vanilla_instance(config, sx.clone()).await;
                                     }
                                     Err(e) => {
@@ -141,7 +138,7 @@ async fn main() {
                         }
                     }
                     "check_download_status" => {
-                        if let Some((percent, text)) = dl_rec.recv().await {
+                        if let Ok((percent, text)) = dl_rec.try_recv() {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["update_downloads".to_string(), text, percent.to_string()] }).unwrap()));
                         } else {
                             responder.respond(Response::new(vec![]));

@@ -14,20 +14,21 @@ pub fn random_string(len: usize) -> String {
         .collect()
 }
 
-pub fn download_file(url: &str, file_path: &str, size: u64, sender: UnboundedSender<(u8, String)>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn download_file(url: &str, file_path: &str, size: u64, sender: UnboundedSender<(usize, String)>, status: &str) -> Result<(), Box<dyn std::error::Error>> {
     let url = url.to_string();
     let file_path = file_path.to_string();
+    let status = status.to_string();
     tokio::spawn( async move {
         let client = Client::new();
         let mut response: Response = client.get(url).send().await.unwrap();
 
         if response.status().is_success() {
             let mut file = File::create(file_path).await.unwrap();
-            let mut cur_size = 0;
             while let Some(chunk) = response.chunk().await.unwrap() {
-                cur_size += chunk.len();
-                sender.send((((cur_size / size as usize) * 100) as u8, "Downloading".to_string()) );
-                let _ = file.write_all(&chunk).await;
+                if let Err(e) = sender.send((chunk.len(), status.clone()) ) {
+                    println!("SendError: {}", e);
+                }
+                let _ = file.write(&chunk).await;
             }
         } else {
             println!("Failed to download file: {}", response.status());

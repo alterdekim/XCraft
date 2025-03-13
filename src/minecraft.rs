@@ -1,6 +1,6 @@
 
 pub mod versions {
-    use std::error::Error;
+    use std::{error::Error, path::PathBuf};
 
     use serde::{Deserialize, Serialize};
 
@@ -42,9 +42,44 @@ pub mod versions {
         pub name: String,
     }
 
+    impl VersionLibrary {
+        pub fn to_pathbuf_path(&self) -> PathBuf {
+            let mut p = PathBuf::new();
+            let pkg = self.name.clone();
+            let g = pkg.split(":").collect::<Vec<&str>>();
+            let pkg_name = g[0];
+            let artifact_name = g[1];
+            let version = g[2];
+            let b = pkg_name.split(".").collect::<Vec<&str>>();
+            for h in b {
+                p.push(h);
+            }
+            p.push(artifact_name);
+            p.push(version);
+            p
+        }
+
+        pub fn to_pathbuf_file(&self) -> PathBuf {
+            let mut p = PathBuf::new();
+            let pkg = self.name.clone();
+            let g = pkg.split(":").collect::<Vec<&str>>();
+            let pkg_name = g[0];
+            let artifact_name = g[1];
+            let version = g[2];
+            let b = pkg_name.split(".").collect::<Vec<&str>>();
+            for h in b {
+                p.push(h);
+            }
+            p.push(artifact_name);
+            p.push(version);
+            p.push(vec![artifact_name, "-", version, ".jar"].concat());
+            p
+        }
+    }
+
     #[derive(Serialize, Deserialize)]
     pub struct LibraryDownloads {
-        pub artifact: LibraryArtifact
+        pub artifact: Option<LibraryArtifact>
     }
 
     #[derive(Serialize, Deserialize)]

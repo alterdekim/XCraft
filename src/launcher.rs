@@ -38,6 +38,9 @@ impl Launcher {
     }
 
     pub async fn new_vanilla_instance(&mut self, config: VersionConfig, sender: UnboundedSender<(u8, String)>) {
+        
+        let (sx, mut rx) = mpsc::unbounded_channel();
+        
         let root = self.config.launcher_dir();
         let mut instances = root.clone();
         instances.push("instances");
@@ -47,14 +50,35 @@ impl Launcher {
 
         instances.push("client.jar");
 
+        let mut overall_size = config.downloads.client.size as usize;
+
         let client_jar_url = config.downloads.client.url;
 
-        util::download_file(&client_jar_url, instances.to_str().unwrap(), config.downloads.client.size, sender);
+        util::download_file(&client_jar_url, instances.to_str().unwrap(), config.downloads.client.size, sx.clone(), "Downloading client.jar");
 
-        /*for i in 0..config.libraries.len() {
+        let mut libraries = root.clone();
+        libraries.push("libraries");
+
+        for i in 0..config.libraries.len() {
             let library = &config.libraries[i];
+            if let Some(artifact) = &library.downloads.artifact {
+                overall_size += artifact.size as usize;
+                let mut dl_path = libraries.clone();
+                let mut dl_pp = libraries.clone();
+                dl_pp.push(library.to_pathbuf_path());
+                std::fs::create_dir_all(dl_pp);
+                dl_path.push(library.to_pathbuf_file());
+                util::download_file(&artifact.url, dl_path.to_str().unwrap(), config.downloads.client.size, sx.clone(), "Downloading libraries");
+            }
+        }
 
-        }*/
+        tokio::spawn(async move {
+            let mut current_size = 0;
+            while let Some((size, status)) = rx.recv().await {
+                current_size += size;
+                sender.send((((current_size as f32 / overall_size as f32) * 100.0) as u8, status));
+            }
+        });
     }
 
     pub fn init_dirs(&self) {
