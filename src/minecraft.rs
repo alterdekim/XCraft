@@ -111,21 +111,17 @@ pub mod versions {
     }
 
     pub async fn fetch_versions_list() -> Result<VersionManifest, Box<dyn Error + Send + Sync>> {
-        let resp: VersionManifest = reqwest::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
-            .await?
-            .json()
-            .await?;
-
-        Ok(resp)
+        let mut r = surf::get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").await?;
+        let resp = r.body_bytes().await.unwrap();
+        let m = serde_json::from_slice(&resp)?;
+        Ok(m)
     }
 
     pub async fn fetch_version_object(version: &Version) -> Result<VersionConfig, Box<dyn Error + Send + Sync>> {
-        let resp: String = reqwest::get(&version.url)
-        .await?
-        .text()
-        .await?;
-
-        let resp: VersionConfig = serde_json::from_str(&resp)?;
+        let url = version.url.clone();
+        let mut r = surf::get(url).await?;
+        let resp = r.body_bytes().await.unwrap();
+        let resp: VersionConfig = serde_json::from_slice(&resp)?;
         Ok(resp)
     }
 }

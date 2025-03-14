@@ -1,8 +1,8 @@
 use std::sync::{Arc, Mutex};
+use futures::AsyncReadExt;
 use rand::{distr::Alphanumeric, Rng};
-use reqwest::{Client, Response};
 use tokio::{fs::File, io::AsyncWriteExt};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{Sender, UnboundedReceiver, UnboundedSender};
 use tokio::sync::{mpsc};
 use crate::launcher::Launcher;
 
@@ -19,20 +19,24 @@ pub fn download_file(url: &str, file_path: &str, size: u64, sender: UnboundedSen
     let file_path = file_path.to_string();
     let status = status.to_string();
     tokio::spawn( async move {
-        let client = Client::new();
-        let mut response: Response = client.get(url).send().await.unwrap();
+        let mut res = surf::get(url).await.unwrap();
+    
+        let total_size = res.len().unwrap_or(0); // Total size in bytes (if available)
+        let mut downloaded = 0;
+        let mut buf = vec![0; 8192]; // Buffer for reading chunks
+        
+        let mut file = File::create(file_path).await.unwrap();
 
-        if response.status().is_success() {
-            let mut file = File::create(file_path).await.unwrap();
-            while let Some(chunk) = response.chunk().await.unwrap() {
-                if let Err(e) = sender.send((chunk.len(), status.clone()) ) {
-                    println!("SendError: {}", e);
-                }
-                let _ = file.write(&chunk).await;
+        let mut r= res.take_body().into_reader();
+        while let Ok(n) = r.read(&mut buf).await {
+            if n == 0 {
+                break;
             }
-        } else {
-            println!("Failed to download file: {}", response.status());
+            downloaded += n;
+            
+            file.write(&buf[..n]).await;
         }
+        sender.send((downloaded, status.clone()));
     });
     Ok(())
 }

@@ -1,7 +1,7 @@
 use core::str;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{Sender, UnboundedReceiver, UnboundedSender};
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
 
 #[derive(Default)]
