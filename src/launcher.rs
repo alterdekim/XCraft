@@ -91,11 +91,10 @@ impl Launcher {
         client_jar.push(&instance_name);
         client_jar.push("client.jar");
 
-        let mut cmd = Vec::new();
-        //cmd.push("java".to_string());
+        let mut cmd = Command::new("java");
         
         for arg in JAVA_ARGS {
-            cmd.push(arg.to_string());
+            cmd.arg(arg.to_string());
         }
 
         let mut natives_path = self.config.launcher_dir();
@@ -103,9 +102,9 @@ impl Launcher {
         natives_path.push(&instance_name);
         natives_path.push("natives");
 
-        cmd.push(["-Djava.library.path=", natives_path.to_str().unwrap() ].concat());
-        cmd.push(["-Dminecraft.client.jar=", client_jar.to_str().unwrap()].concat());
-        cmd.push("-cp".to_string());
+        cmd.arg(["-Djava.library.path=", natives_path.to_str().unwrap() ].concat());
+        cmd.arg(["-Dminecraft.client.jar=", client_jar.to_str().unwrap()].concat());
+        cmd.arg("-cp".to_string());
 
         if let Ok(data) = std::fs::read(&instances) {
             let config: VersionConfig = serde_json::from_slice(&data).unwrap();
@@ -129,16 +128,17 @@ impl Launcher {
                 }
             }
             libraries_cmd.push(client_jar.to_str().unwrap().to_string());
-            cmd.push(libraries_cmd.concat());
-            cmd.push(config.mainClass.clone());
+            cmd.arg(libraries_cmd.concat());
+            cmd.arg(config.mainClass.clone());
+
+            let mut game_dir = self.config.launcher_dir();
+            game_dir.push("instances");
+            game_dir.push(&instance_name);
+            game_dir.push("data");
+            println!("Username: {}", self.config.user_name);
+            cmd.args(&["--username", &self.config.user_name, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", "D:\\Documents\\RustroverProjects\\XCraft\\xcraft\\assets", "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "legacy", "--width", "925", "--height", "530"]);
+            cmd.spawn();
         }
-
-        let mut game_dir = self.config.launcher_dir();
-        game_dir.push("instances");
-        game_dir.push(&instance_name);
-        game_dir.push("data");
-
-        cmd.push(["--username", "getter", "--version", "1.9.4", "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", "D:\\Documents\\RustroverProjects\\XCraft\\xcraft\\assets", "--assetIndex", "1.9", "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "legacy", "--width", "925", "--height", "530"].join(" "));
     }
 
 
