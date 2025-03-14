@@ -27,7 +27,7 @@
                 <div class="py-4">
                   <a
                     href="#"
-                    onclick="showSection(this, 'instances')"
+                    onclick="showSection(this, 'instances'); showInstancesSection()"
                     class="menu-btn t group relative flex justify-center rounded-sm bg-green-50 px-2 py-1.5 text-green-700"
                   >
                     <i class="fa-solid fa-gamepad"></i>
@@ -158,7 +158,7 @@
       </div>
         
       <div class="flex justify-center items-center w-screen h-screen">
-        <div id="loading-section" class="bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+        <div id="loading-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
             <h2 class="text-2xl font-semibold text-gray-700">Launching Minecraft</h2>
     
             <!-- Loading Status -->
@@ -354,7 +354,7 @@
 
         <div id="instances-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
           <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-            <img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2Foriginals%2Fc0%2F84%2Ff1%2Fc084f19e45602b0a56107ec87149c3a5.png&f=1&nofb=1&ipt=7a22d9bd0f8ec98f71cdee3b26ba45c8eeb4da5286e17337d5550291e1ad1dda&ipo=images" class="w-12 h-12 rounded-full">
+            <img src="" class="w-12 h-12 rounded-full">
             <div class="h-fill ms-2">
               <h2 class="text-lg font-semibold">Release</h2>
               <h2 class="text-sm font-semibold">1.12.2</h2>
@@ -393,20 +393,48 @@
               if( params[i] == "show_add" ) {
                 showAddSection();
               } else if( params[i] == "set_downloadable_versions" ) {
-                setDownloadableVersions(params.slice(1));
+                setDownloadableVersions(params.slice(i+1));
                 break;
               } else if( params[i] == "update_downloads" ) {
-                  updateDownloads(params.slice(1));
+                  updateDownloads(params.slice(i+1));
                   break;
+              } else if( params[i] == "show_instances") {
+                showInstancesSection();
+              } else if( params[i] == "set_instances_list" ) {
+                setInstancesList(params.slice(i+1));
               }
+            }
+          }
+
+          function setInstancesList(params) {
+            $("#instances-section").html("");
+            for( let i = 0; i < params.length; i+=3 ) {
+               let instance = `<div onclick="runInstance('`+params[i]+`')" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+            <img src="`+params[i+2]+`" class="w-12 h-12 rounded-full">
+            <div class="h-fill ms-2">
+              <h2 class="text-lg font-semibold">` + params[i+1] + `</h2>
+              <h2 class="text-sm font-semibold">` + params[i] + `</h2>
+            </div>
+          </div>`;
+              $("#instances-section").append(instance);
             }
           }
 
           function updateDownloads(params) {
               let text = params[0];
               let percentage = params[1];
-              $("#loading-text").html(text);
-              $("#progress-bar").css("width", percentage+"%");
+              if( text != "_" ) {
+                $("#loading-text").html(text);
+                $("#progress-bar").css("width", percentage+"%");
+              } else {
+                $("#sidebar").removeClass('hidden');
+                showSection(undefined, "instances");
+                showInstancesSection();
+              }
+          }
+
+          function showInstancesSection() {
+            $.post({url: "fetch_instances_list" }, processParams);
           }
 
           function downloadSelectedVersion() {
@@ -457,8 +485,10 @@
             $.get("check_installation", processParams);
 
             setInterval(function() {
-                $.get("check_download_status", processParams);
-            }, 100);
+                if( !$("#loading-section").hasClass("hidden") ) {
+                  $.get("check_download_status", processParams);
+                }
+            }, 10);
           });
       </script>
   </body>

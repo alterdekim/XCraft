@@ -33,6 +33,7 @@ pub mod versions {
         pub mainClass: String,
         pub downloads: ConfigDownloads,
         pub id: String,
+        pub r#type: String,
         pub libraries: Vec<VersionLibrary>
     }
 
@@ -78,8 +79,23 @@ pub mod versions {
     }
 
     #[derive(Serialize, Deserialize)]
+    pub struct LibraryClassifiers {
+        #[serde(rename = "natives-windows")]
+        pub natives: Option<LibraryNatives>
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct LibraryNatives {
+        pub path: String,
+        pub sha1: String,
+        pub size: u64,
+        pub url: String
+    }
+
+    #[derive(Serialize, Deserialize)]
     pub struct LibraryDownloads {
-        pub artifact: Option<LibraryArtifact>
+        pub artifact: Option<LibraryArtifact>,
+        pub classifiers: Option<LibraryClassifiers>
     }
 
     #[derive(Serialize, Deserialize)]
@@ -107,7 +123,17 @@ pub mod versions {
         pub id: String,
         pub sha1: String,
         pub totalSize: u64,
+        pub size: u64,
         pub url: String
+    }
+
+    impl ConfigAssetIndex {
+        pub fn to_path(&self) -> PathBuf {
+            let mut p = PathBuf::new();
+            p.push("indexes");
+            p.push([&self.id, ".json"].concat());
+            p
+        }
     }
 
     pub async fn fetch_versions_list() -> Result<VersionManifest, Box<dyn Error + Send + Sync>> {
@@ -122,6 +148,50 @@ pub mod versions {
         let mut r = surf::get(url).await?;
         let resp = r.body_bytes().await.unwrap();
         let resp: VersionConfig = serde_json::from_slice(&resp)?;
+        Ok(resp)
+    }
+}
+
+pub mod assets {
+    use std::{collections::HashMap, error::Error, path::PathBuf};
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct SingleAsset {
+        pub hash: String,
+        pub sha1: Option<String>
+    }
+
+    impl SingleAsset {
+        pub fn to_url(&self) -> String {
+            ["https://resources.download.minecraft.net/", &self.hash[..2], "/", &self.hash].concat()
+        }
+
+        pub fn to_path(&self) -> PathBuf {
+            let mut p = PathBuf::new();
+            p.push("objects");
+            p.push(&self.hash[..2]);
+            p.push(&self.hash);
+            p
+        }
+
+        pub fn to_small_path(&self) -> PathBuf {
+            let mut p = PathBuf::new();
+            p.push("objects");
+            p.push(&self.hash[..2]);
+            p
+        }
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Assets {
+        pub objects: HashMap<String, SingleAsset>
+    }
+
+    pub async fn fetch_assets_list(url: &str) -> Result<Assets, Box<dyn Error + Send + Sync>> {
+        let mut r = surf::get(url).await?;
+        let resp = r.body_bytes().await.unwrap();
+        let resp: Assets = serde_json::from_slice(&resp)?;
         Ok(resp)
     }
 }

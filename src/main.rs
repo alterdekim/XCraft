@@ -82,7 +82,7 @@ async fn main() {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
                 let ui_action = &ui_action[16..];
                 match ui_action {
-                    "ui" => responder.respond(Response::new(include_str!("www/portable.html").as_bytes())),
+                    "ui" => responder.respond(Response::new(include_bytes!("www/portable.html"))),
                     "portable" => {
                         launcher.config.set_portable(true);
                         launcher.init_dirs();
@@ -128,7 +128,7 @@ async fn main() {
                                     Ok(config ) => {
                                         println!("Config: {}", config.id);
                                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string(), "sidebar_off".to_string()] }).unwrap()));
-                                        launcher.new_vanilla_instance(config, sx.clone()).await;
+                                        launcher.new_vanilla_instance(config, version, sx.clone()).await;
                                     }
                                     Err(e) => {
                                         println!("Error: {}", e);
@@ -136,6 +136,18 @@ async fn main() {
                                 }
                             }
                         }
+                    }
+                    "fetch_instances_list" => {
+                        let resp = launcher.get_instances_list();
+                        let mut v: Vec<String> = Vec::new();
+                        v.push("set_instances_list".to_string());
+                        for (id, release_type, img) in resp {
+                            v.push(id);
+                            v.push(release_type);
+                            v.push(img);
+                        }
+
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
                     }
                     "check_download_status" => {
                         if let Ok((percent, text)) = dl_rec.try_recv() {
