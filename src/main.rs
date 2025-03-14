@@ -99,6 +99,7 @@ async fn main() {
                             if !launcher.is_config_exist() {
                                 responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_login".to_string()] }).unwrap()))
                             } else {
+                                launcher.load_config();
                                 responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_add".to_string(), "sidebar_on".to_string()] }).unwrap()))
                             }
                         }

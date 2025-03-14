@@ -73,7 +73,14 @@ impl Launcher {
                 p.push("client.json");
                 if let Ok(data) = std::fs::read(p) {
                     let config: VersionConfig = serde_json::from_slice(&data).unwrap();
-                    v.push((config.id, config.r#type,  format!("data:image/png;base64,{}", BASE64_STANDARD.encode(include_bytes!("www/icons/alpha.png")))));
+                    let c_type = config.r#type;
+                    let c_type = c_type.as_str();
+                    v.push((config.id, c_type.to_string(),  format!("data:image/png;base64,{}", BASE64_STANDARD.encode(match c_type {
+                        "old_alpha" => include_bytes!("www/icons/alpha.png").to_vec(),
+                        "old_beta" => include_bytes!("www/icons/beta.png").to_vec(),
+                        "release" | "snapshot" => include_bytes!("www/icons/release.png").to_vec(),
+                        _ => include_bytes!("www/icons/glowstone.png").to_vec()
+                    }))));
                 }
             }
         }
@@ -135,8 +142,10 @@ impl Launcher {
             game_dir.push("instances");
             game_dir.push(&instance_name);
             game_dir.push("data");
-            println!("Username: {}", self.config.user_name);
-            cmd.args(&["--username", &self.config.user_name, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", "D:\\Documents\\RustroverProjects\\XCraft\\xcraft\\assets", "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "legacy", "--width", "925", "--height", "530"]);
+
+            let mut assets_dir = self.config.launcher_dir();
+            assets_dir.push("assets");
+            cmd.args(&["--username", &self.config.user_name, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
             cmd.spawn();
         }
     }
@@ -177,26 +186,30 @@ impl Launcher {
         for i in 0..config.libraries.len() {
             let library = &config.libraries[i];
             if let Some(artifact) = &library.downloads.artifact {
-                overall_size += artifact.size as usize;
                 let mut dl_path = libraries.clone();
                 let mut dl_pp = libraries.clone();
                 dl_pp.push(library.to_pathbuf_path());
                 let _ = std::fs::create_dir_all(dl_pp);
                 dl_path.push(library.to_pathbuf_file());
-                let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries");
-                cnt += 1;
+                if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                    overall_size += artifact.size as usize;
+                    let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries");
+                    cnt += 1;
+                }
             }
 
             if let Some(classifiers) = &library.downloads.classifiers {
                 if let Some(natives) = &classifiers.natives {
-                    overall_size += natives.size as usize;
                     let mut dl_path = libraries.clone();
                     dl_path.push(&natives.path);
                     let t_p = dl_path.to_str().unwrap().split("/").collect::<Vec<&str>>();
                     let t_p = t_p[..t_p.len()-1].join("/");
                     let _ = std::fs::create_dir_all(&t_p);
-                    let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives");
-                    cnt += 1;
+                    if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                        overall_size += natives.size as usize;
+                        let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives");
+                        cnt += 1;
+                    }
                 }
             }
         }
@@ -233,8 +246,10 @@ impl Launcher {
             single_object_path.push(asset.to_small_path());
             std::fs::create_dir_all(single_object_path);
 
-            util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects");
-            cnt += 1;
+            if File::open(single_object.to_str().unwrap()).await.is_err() {
+                util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects");
+                cnt += 1;
+            }
         }
 
         tokio::spawn(async move {
