@@ -437,6 +437,10 @@
             $.post({url: "fetch_instances_list" }, processParams);
           }
 
+          function runInstance(version) {
+            $.post({url: "run_instance", data: JSON.stringify({ params: [version] })}, processParams);
+          }
+
           function downloadSelectedVersion() {
             let version = $('#mc-version :selected').text();
             $.post({url: "download_vanilla", data: JSON.stringify({ params: [version] })}, processParams);

@@ -156,6 +156,10 @@ async fn main() {
                             responder.respond(Response::new(vec![]));
                         }
                     }
+                    "run_instance" => {
+                        let instance_name = params.unwrap().params[0].clone();
+                        launcher.launch_instance(instance_name).await;
+                    }
                     _ => {}
                 }
             }

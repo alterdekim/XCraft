@@ -1,11 +1,31 @@
 use core::str;
+use std::io::Cursor;
 use base64::{encode, Engine};
 use base64::prelude::BASE64_STANDARD;
 use tokio::fs::File;
+use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use crate::minecraft::versions::Version;
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
+
+const JAVA_ARGS: [&str; 23] = ["-Xms1024M", 
+"-XX:+UnlockExperimentalVMOptions", 
+"-XX:+DisableExplicitGC",
+"-XX:MaxGCPauseMillis=200",
+"-XX:+AlwaysPreTouch",
+"-XX:+ParallelRefProcEnabled",
+"-XX:+UseG1GC",
+"-XX:G1NewSizePercent=30",
+"-XX:G1MaxNewSizePercent=40",
+"-XX:G1HeapRegionSize=8M",
+"-XX:G1ReservePercent=20",
+"-XX:InitiatingHeapOccupancyPercent=15",
+"-XX:G1HeapWastePercent=5",
+"-XX:G1MixedGCCountTarget=4",
+"-XX:G1MixedGCLiveThresholdPercent=90",
+"-XX:G1RSetUpdatingPauseTimePercent=5",
+"-XX:+UseStringDeduplication", "-Xmx1024M", "-Dfile.encoding=UTF-8", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true", "-Djava.net.useSystemProxies=true", "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"];
 
 #[derive(Default)]
 pub struct Launcher {
@@ -59,6 +79,68 @@ impl Launcher {
         }
         v
     }
+
+    pub async fn launch_instance(&self, instance_name: String) {
+        let mut instances = self.config.launcher_dir();
+        instances.push("instances");
+        instances.push(&instance_name);
+        instances.push("client.json");
+
+        let mut client_jar = self.config.launcher_dir();
+        client_jar.push("instances");
+        client_jar.push(&instance_name);
+        client_jar.push("client.jar");
+
+        let mut cmd = Vec::new();
+        //cmd.push("java".to_string());
+        
+        for arg in JAVA_ARGS {
+            cmd.push(arg.to_string());
+        }
+
+        let mut natives_path = self.config.launcher_dir();
+        natives_path.push("instances");
+        natives_path.push(&instance_name);
+        natives_path.push("natives");
+
+        cmd.push(["-Djava.library.path=", natives_path.to_str().unwrap() ].concat());
+        cmd.push(["-Dminecraft.client.jar=", client_jar.to_str().unwrap()].concat());
+        cmd.push("-cp".to_string());
+
+        if let Ok(data) = std::fs::read(&instances) {
+            let config: VersionConfig = serde_json::from_slice(&data).unwrap();
+            let mut libraries_cmd = Vec::new();
+            for library in config.libraries {
+                if let Some(classifier) = &library.downloads.classifiers {
+                    if let Some(natives) = &classifier.natives {
+                        let rel_path = &natives.path;
+                        let mut libs = self.config.launcher_dir();
+                        libs.push("libraries");
+                        let rel_path = [libs.to_str().unwrap(), "\\", &rel_path.replace("/", "\\")].concat();
+                        let data = std::fs::read(rel_path).unwrap();
+
+                        zip_extract::extract(Cursor::new(data), &natives_path, true);
+                    }
+                } else {
+                    let mut libs = self.config.launcher_dir();
+                    libs.push("libraries");
+                    libs.push(library.to_pathbuf_file());
+                    libraries_cmd.push([libs.to_str().unwrap(), ";"].concat());
+                }
+            }
+            libraries_cmd.push(client_jar.to_str().unwrap().to_string());
+            cmd.push(libraries_cmd.concat());
+            cmd.push(config.mainClass.clone());
+        }
+
+        let mut game_dir = self.config.launcher_dir();
+        game_dir.push("instances");
+        game_dir.push(&instance_name);
+        game_dir.push("data");
+
+        cmd.push(["--username", "getter", "--version", "1.9.4", "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", "D:\\Documents\\RustroverProjects\\XCraft\\xcraft\\assets", "--assetIndex", "1.9", "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "legacy", "--width", "925", "--height", "530"].join(" "));
+    }
+
 
     pub async fn new_vanilla_instance(&mut self, config: VersionConfig, version_object: &Version, sender: UnboundedSender<(u8, String)>) {
         
