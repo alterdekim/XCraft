@@ -242,56 +242,51 @@
             <!-- Tabs -->
             <div class="mt-4 flex justify-around text-gray-600">
                 <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i> Launcher</button>
-                <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-gamepad"></i> Minecraft</button>
                 <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i> Java</button>
-                <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-cube"></i> Versions</button>
             </div>
 
             <!-- Sections -->
-            <div id="launcher" class="settings-tab mt-4">
+            <div id="launcher" class="settings-tab mt-4 hidden">
                 <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-rocket"></i> Launcher Settings</h3>
-                <label class="block mt-3 text-gray-600">Auto-update:</label>
-                <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                    <option>Enabled</option>
-                    <option>Disabled</option>
-                </select>
-
-                <label class="block mt-3 text-gray-600">UI Theme:</label>
-                <select class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                    <option>Light</option>
-                    <option>Dark</option>
-                </select>
+                
+                <div class="mt-4 flex justify-between items-center">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show beta versions</span>
+                  </label>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show alpha versions</span>
+                  </label>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show snapshots</span>
+                  </label>
+                </div>
             </div>
 
-            <div id="minecraft" class="settings-tab mt-4 hidden">
-                <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-gamepad"></i> Minecraft Settings</h3>
-                <label class="block mt-3 text-gray-600">Game Directory:</label>
-                <input type="text" placeholder="/path/to/minecraft" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-
-                <label class="block mt-3 text-gray-600">RAM Allocation:</label>
-                <input type="range" min="1024" max="16384" step="512" class="w-full">
-
-                <label class="block mt-3 text-gray-600">Enable Mods:</label>
-                <input type="checkbox" class="ml-2">
-            </div>
-
-            <div id="java" class="settings-tab mt-4 hidden">
+            <div id="java" class="settings-tab mt-4">
                 <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-mug-hot"></i> Java Settings</h3>
-                <label class="block mt-3 text-gray-600">Java Path:</label>
-                <input type="text" placeholder="/path/to/java" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-
-                <label class="block mt-3 text-gray-600">Custom JVM Arguments:</label>
-                <textarea class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" rows="2">-Xmx4G -Xms2G</textarea>
+                <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <input id="java-path" type="text" placeholder="Enter Java Path"
+                      class="flex-1 px-4 py-2 focus:outline-none">
+                  <button onclick="locateJava()" 
+                      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
+                      Auto
+                  </button>
+              </div>
+              <label for="number-input" class="block mb-2 text-sm font-medium text-gray-800 dark:text-white">Allocate memory (MB):</label>
+              <input type="number" id="number-input" min="1024" step="1" aria-describedby="helper-text-explanation" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5" placeholder="1024" required />
             </div>
 
-            <div id="versions" class="settings-tab mt-4 hidden">
-                <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-cube"></i> Version Settings</h3>
-                <label class="block mt-3 text-gray-600">Show Experimental Versions:</label>
-                <input type="checkbox" class="ml-2">
-
-                <label class="block mt-3 text-gray-600">Show Snapshots:</label>
-                <input type="checkbox" class="ml-2">
-            </div>
+            
 
             <button 
                 class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
@@ -402,8 +397,20 @@
                 showInstancesSection();
               } else if( params[i] == "set_instances_list" ) {
                 setInstancesList(params.slice(i+1));
+                break;
+              } else if( params[i] == "locate_java" ) {
+                setJavaPath(params[i+1]);
+                break;
               }
             }
+          }
+
+          function setJavaPath(javaPath) {
+            $("#java-path").val(javaPath);
+          }
+
+          function locateJava() {
+            $.post({url: "locate_java" }, processParams);
           }
 
           function setInstancesList(params) {

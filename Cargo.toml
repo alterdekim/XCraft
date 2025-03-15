@@ -16,3 +16,4 @@ toml = "0.8.20"
 surf = { version = "2.3.2", features = ["hyper-client"] }
 base64 = "0.22.1"
 zip-extract = "0.2.1"
+java-locator = "0.1.9"

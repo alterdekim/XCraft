@@ -161,6 +161,14 @@ async fn main() {
                         let instance_name = params.unwrap().params[0].clone();
                         launcher.launch_instance(instance_name).await;
                     }
+                    "locate_java" => {
+                        if let Ok(java_path) = java_locator::locate_file("java.exe") {
+                            launcher.config.java_path = java_path.clone();
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["locate_java".to_string(), [&java_path, "java.exe"].join("\\")] }).unwrap()));
+                        } else {
+                            // todo: implement error notifications
+                        }
+                    }
                     _ => {}
                 }
             }

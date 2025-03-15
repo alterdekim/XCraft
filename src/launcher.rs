@@ -55,7 +55,7 @@ impl Launcher {
 
     pub fn init_config(&mut self, user_name: String) {
         self.load_config();
-        self.config.user_name = user_name;
+        self.config.set_username(user_name);
         self.config.user_secret = crate::util::random_string(32);
         self.save_config();
     }
@@ -145,7 +145,7 @@ impl Launcher {
 
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
-            cmd.args(&["--username", &self.config.user_name, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            cmd.args(&["--username", self.config.user_name(), "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
             cmd.spawn();
         }
     }

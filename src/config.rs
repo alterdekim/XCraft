@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Default, Serialize, Deserialize)]
 pub struct LauncherConfig {
     is_portable: bool,
-    pub user_name: String,
-    pub user_secret: String
+    user_name: String,
+    pub user_secret: String,
+    pub java_path: String
 }
 
 impl LauncherConfig {
@@ -27,6 +28,14 @@ impl LauncherConfig {
         let mut p = self.launcher_dir();
         p.push("config.toml");
         p
+    }
+
+    pub fn user_name(&self) -> &str {
+        &self.user_name
+    }
+
+    pub fn set_username(&mut self, user_name: String) {
+        self.user_name = user_name;
     }
 }
 
