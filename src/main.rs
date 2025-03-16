@@ -111,7 +111,16 @@ async fn main() {
                     }
                     "fetch_official_versions" => {
                         if let Ok(versions) = crate::minecraft::versions::fetch_versions_list().await {
-                            let versions: Vec<String> = versions.versions.iter().map(|t| t.id.clone()).collect();
+                            let versions: Vec<String> = versions.versions.iter().filter(|t| {
+                                if !launcher.config.show_alpha && t.r#type == "old_alpha" {
+                                    return false;
+                                } else if !launcher.config.show_beta && t.r#type == "old_beta" {
+                                    return false;
+                                } else if !launcher.config.show_snapshots && t.r#type == "snapshot" {
+                                    return false;
+                                }
+                                return true;
+                            }).map(|t| t.id.clone()).collect();
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [ vec!["set_downloadable_versions".to_string()], versions ].concat() }).unwrap()));
                         } else {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: Vec::new() }).unwrap()));
@@ -159,7 +168,7 @@ async fn main() {
                     }
                     "run_instance" => {
                         let instance_name = params.unwrap().params[0].clone();
-                        launcher.launch_instance(instance_name).await;
+                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32)).await;
                     }
                     "locate_java" => {
                         if let Ok(java_path) = java_locator::locate_file("java.exe") {
@@ -168,6 +177,14 @@ async fn main() {
                         } else {
                             // todo: implement error notifications
                         }
+                    }
+                    "add_server" => {
+                        let params = &params.unwrap().params;
+                        let (status, msg) = launcher.register_user_server(params[0].clone(), params[1].clone(), params[2].clone()).await;
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), status.to_string(), msg.to_string()] }).unwrap()));
+                    }
+                    "fetch_settings" => {
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string()] }).unwrap()));
                     }
                     _ => {}
                 }

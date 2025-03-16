@@ -1,11 +1,14 @@
 use core::str;
 use std::io::Cursor;
-use base64::{encode, Engine};
+use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use tokio::fs::File;
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use crate::config::{LauncherCredentials, LauncherServer};
+use crate::minecraft;
+use crate::minecraft::session::SignUpResponse;
 use crate::minecraft::versions::Version;
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
 
@@ -56,8 +59,52 @@ impl Launcher {
     pub fn init_config(&mut self, user_name: String) {
         self.load_config();
         self.config.set_username(user_name);
-        self.config.user_secret = crate::util::random_string(32);
         self.save_config();
+    }
+
+    fn save_server_info(&mut self, uuid: String, username: String, password: String, domain: String, session_server_port: u16, server_port: u16) -> (bool, &str) {
+        self.config.add_server(LauncherServer {
+            domain,
+            port: server_port,
+            session_server_port,
+            credentials: LauncherCredentials {
+                uuid,
+                username,
+                password
+            }
+        });
+        self.save_config();
+        (true, "You are successfully registered")
+    }
+
+    pub async fn register_user_server(&mut self, server: String, username: String, password: String) -> (bool, &str) {
+        let mut session_server_port: u16 = 8999;
+        let mut server_port: u16 = 25565;
+        let mut domain = server.clone();
+        if let Some(index) = server.find("#") {
+            let (a,b) = server.split_at(index+1);
+            session_server_port = b.parse().unwrap();
+            domain = a[..a.len()-1].to_string();
+        }
+
+        if let Some(index) = domain.find(":") {
+            let dmc = domain.clone();
+            let (a,b) = dmc.split_at(index+1);
+            domain = a[..a.len()-1].to_string();
+            server_port = b.parse().unwrap();
+        }
+
+        println!("Server information: {}:{} session={}", domain, server_port, session_server_port);
+
+        match minecraft::session::try_signup(domain.clone(), session_server_port, username.clone(), password.clone()).await {
+            Ok(status) => match status {
+                SignUpResponse::ServerError => (false, "Internal server error"),
+                SignUpResponse::BadCredentials => (false, "Username or password is not valid"),
+                SignUpResponse::UserAlreadyExists => (false, "User already exists"),
+                SignUpResponse::Registered(uuid) => self.save_server_info(uuid, username, password, domain, session_server_port, server_port)
+            }
+            Err(_e) => (false, "Internal server error")
+        }
     }
 
     pub fn get_instances_list(&self) -> Vec<(String, String, String)> {
@@ -87,7 +134,7 @@ impl Launcher {
         v
     }
 
-    pub async fn launch_instance(&self, instance_name: String) {
+    pub async fn launch_instance(&self, instance_name: String, username: String, uuid: String, token: String) {
         let mut instances = self.config.launcher_dir();
         instances.push("instances");
         instances.push(&instance_name);
@@ -145,7 +192,7 @@ impl Launcher {
 
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
-            cmd.args(&["--username", self.config.user_name(), "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", "51820246d9fe372b81592602a5239ad9", "--accessToken", "51820246d9fe372b81592602a5239ad9", "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            cmd.args(&["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
             cmd.spawn();
         }
     }
@@ -269,7 +316,7 @@ impl Launcher {
     pub fn init_dirs(&self) {
         let root = self.config.launcher_dir();
         std::fs::create_dir_all(&root);
-        // instances assets libraries config.toml servers credentials
+        // instances assets libraries config.toml
         let mut instances = root.clone();
         instances.push("instances");
 
@@ -279,16 +326,8 @@ impl Launcher {
         let mut libraries = root.clone();
         libraries.push("libraries");
 
-        let mut servers = root.clone();
-        servers.push("servers");
-
-        let mut credentials = root.clone();
-        credentials.push("credentials");
-
         std::fs::create_dir_all(&instances);
         std::fs::create_dir_all(&assets);
         std::fs::create_dir_all(&libraries);
-        std::fs::create_dir_all(&servers);
-        std::fs::create_dir_all(&credentials);
     }
 }

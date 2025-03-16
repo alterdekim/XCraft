@@ -152,6 +152,49 @@ pub mod versions {
     }
 }
 
+pub mod session {
+    use std::error::Error;
+
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize)]
+    struct SignUpRequest {
+        username: String,
+        password: String,
+    }
+
+    pub enum SignUpResponse {
+        Registered(String),
+        BadCredentials,
+        UserAlreadyExists,
+        ServerError
+    }
+
+    #[derive(Deserialize)]
+    struct ResponseUUID {
+        uuid: String
+    }
+
+    pub async fn try_signup(server_domain: String, port: u16, username: String, password: String) -> Result<SignUpResponse, Box<dyn Error + Send + Sync>> {
+        let request = SignUpRequest { username, password };
+        let mut r = surf::post(["http://".to_string(), server_domain, ":".to_string(), port.to_string(), "/api/register".to_string()].concat())
+            .body_json(&request)
+            .unwrap()
+            .await?;
+
+        let b=  r.body_bytes().await.unwrap();
+        match r.status() {
+            surf::StatusCode::BadRequest => Ok(SignUpResponse::BadCredentials),
+            surf::StatusCode::Conflict => Ok(SignUpResponse::UserAlreadyExists),
+            surf::StatusCode::Ok => {
+                let response: ResponseUUID = serde_json::from_slice(&b).unwrap();
+                return Ok(SignUpResponse::Registered(response.uuid))
+            },
+            _ => Ok(SignUpResponse::ServerError)
+        }
+    }
+}
+
 pub mod assets {
     use std::{collections::HashMap, error::Error, path::PathBuf};
     use serde::{Deserialize, Serialize};

@@ -2,14 +2,37 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
+pub struct LauncherCredentials {
+    pub uuid: String,
+    pub username: String,
+    pub password: String
+}
 
+#[derive(Serialize, Deserialize)]
+pub struct LauncherServer {
+    pub domain: String, 
+    pub port: u16,
+    pub session_server_port: u16,
+    pub credentials: LauncherCredentials
+}
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LauncherConfig {
     is_portable: bool,
     user_name: String,
-    pub user_secret: String,
-    pub java_path: String
+    pub java_path: String,
+    pub show_alpha: bool,
+    pub show_beta: bool,
+    pub show_snapshots: bool,
+    pub ram_amount: u32,
+    servers: Vec<LauncherServer>
+}
+
+impl Default for LauncherConfig {
+    fn default() -> Self {
+        Self { is_portable: Default::default(), user_name: Default::default(), java_path: "java".to_string(), show_alpha: true, show_beta: true, show_snapshots: false, ram_amount: 1024, servers: Default::default() }
+    }
 }
 
 impl LauncherConfig {
@@ -36,6 +59,10 @@ impl LauncherConfig {
 
     pub fn set_username(&mut self, user_name: String) {
         self.user_name = user_name;
+    }
+
+    pub fn add_server(&mut self, server: LauncherServer) {
+        self.servers.push(server);
     }
 }
 
