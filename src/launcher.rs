@@ -12,7 +12,7 @@ use crate::minecraft::session::SignUpResponse;
 use crate::minecraft::versions::Version;
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
 
-const JAVA_ARGS: [&str; 23] = ["-Xms1024M", 
+const JAVA_ARGS: [&str; 22] = ["-Xms512M", 
 "-XX:+UnlockExperimentalVMOptions", 
 "-XX:+DisableExplicitGC",
 "-XX:MaxGCPauseMillis=200",
@@ -28,7 +28,7 @@ const JAVA_ARGS: [&str; 23] = ["-Xms1024M",
 "-XX:G1MixedGCCountTarget=4",
 "-XX:G1MixedGCLiveThresholdPercent=90",
 "-XX:G1RSetUpdatingPauseTimePercent=5",
-"-XX:+UseStringDeduplication", "-Xmx1024M", "-Dfile.encoding=UTF-8", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true", "-Djava.net.useSystemProxies=true", "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"];
+"-XX:+UseStringDeduplication", "-Dfile.encoding=UTF-8", "-Dfml.ignoreInvalidMinecraftCertificates=true", "-Dfml.ignorePatchDiscrepancies=true", "-Djava.net.useSystemProxies=true", "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"];
 
 #[derive(Default)]
 pub struct Launcher {
@@ -145,11 +145,13 @@ impl Launcher {
         client_jar.push(&instance_name);
         client_jar.push("client.jar");
 
-        let mut cmd = Command::new("java");
+        let mut cmd = Command::new(&self.config.java_path);
         
         for arg in JAVA_ARGS {
             cmd.arg(arg.to_string());
         }
+        
+        cmd.arg(["-Xmx", &self.config.ram_amount.to_string(), "M"].concat());
 
         let mut natives_path = self.config.launcher_dir();
         natives_path.push("instances");

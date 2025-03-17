@@ -194,7 +194,7 @@
         </div>
 
         <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
-            <h1 class="text-2xl font-semibold text-gray-700">Welcome to Minecraft Launcher</h1>
+            <h1 class="text-2xl font-semibold text-gray-700">Welcome to XCraft</h1>
             <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
 
             <!-- Portable Mode -->
@@ -258,18 +258,15 @@
         </div>
 
         <div id="settings-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h2 class="text-2xl font-semibold text-gray-700">Launcher Settings</h2>
-
-            <!-- Tabs -->
+            <h2 class="text-2xl font-semibold text-gray-700">XCraft Settings</h2>
+            
             <div class="mt-4 flex justify-around text-gray-600">
-                <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i> Launcher</button>
-                <button class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i> Java</button>
+                <button onClick="setSettingsTab('launcher')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i></br>Launcher</button>
+                <button onClick="setSettingsTab('appearance')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-palette"></i></br>Appearance</button>
+                <button onClick="setSettingsTab('java')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i></br>Java</button>
             </div>
-
-            <!-- Sections -->
+            
             <div id="launcher-settings" class="settings-tab mt-4">
-                <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-rocket"></i> Launcher Settings</h3>
-                
                 <div class="mt-4 flex justify-between items-center">
                   <label class="inline-flex items-center cursor-pointer">
                     <input id="show-beta" type="checkbox" value="" class="sr-only peer">
@@ -293,8 +290,19 @@
                 </div>
             </div>
 
+            <div id="appearance-settings" class="settings-tab mt-4 hidden">
+              <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                <input type="file" id="bg-picker" class="hidden" accept=".jpg, .jpeg, .png" onchange="bgSelected(event)">
+                <input id="background-path" type="text" placeholder="Custom background name"
+                    class="flex-1 px-4 py-2 focus:outline-none">
+                <button onclick="$('#bg-picker').click()" 
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
+                    Set
+                </button>
+            </div>
+            </div>
+
             <div id="java-settings" class="settings-tab mt-4 hidden">
-                <h3 class="text-lg font-semibold text-gray-700"><i class="fa-solid fa-mug-hot"></i> Java Settings</h3>
                 <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
                   <input id="java-path" type="text" placeholder="Enter Java Path"
                       class="flex-1 px-4 py-2 focus:outline-none">
@@ -307,14 +315,12 @@
               <input type="number" id="ram-input" min="1024" step="1" aria-describedby="helper-text-explanation" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5" placeholder="1024" value="1024" required />
             </div>
 
-            
-
             <button 
                 onClick="saveSettings()" class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
                 <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
 
-            <p class="mt-4 text-sm text-gray-500">Minecraft Launcher v1.0</p>
+            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
         </div>
 
         <div id="appearance-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
@@ -415,7 +421,6 @@
       <script type="text/javascript">
           
           function processParams(r) {
-              console.log("got", r);
             let params = JSON.parse(r).params;
             for( let i = 0; i < params.length; i++ ) {
               if( params[i].startsWith("show_") ) {
@@ -450,6 +455,28 @@
                 break;
               }
             }
+          }
+
+          function bgSelected(event) {
+            let file = event.target.files[0];
+            if(file) {
+              let allowedTypes = ["image/jpeg", "image/png"];
+              if (allowedTypes.includes(file.type)) {
+                $("#background-path").val(file.name);
+              } else {
+                showPopup("This format is not allowed!");
+              }
+            }
+          }
+
+          function saveSettings() {
+            let show_alpha = $("#show-alpha").prop('checked');
+            let show_beta = $("#show-beta").prop('checked');
+            let show_snapshots = $("#show-snapshots").prop('checked');
+            let java_path = $("#java-path").val();
+            let ram_input = $("#ram-input").val();
+            $.post({url: "update_settings", data: JSON.stringify({ params: [show_alpha+"", show_beta+"", show_snapshots+"", java_path, ram_input+""] }) }, processParams);
+            showPopup("Saved!");
           }
 
           function setSettings(params) {
@@ -549,11 +576,18 @@
           }
 
           function runPortable() {
-            console.log($.get("portable", processParams));
+            $.get("portable", processParams);
           }
 
           function installMinecraft() {
-            console.log($.get("installation", processParams));
+            $.get("installation", processParams);
+          }
+
+          function setSettingsTab(tab_name) {
+            $(".settings-tab").each(function(i, d) {
+                $(d).addClass('hidden');
+            });
+            $("#"+tab_name+"-settings").removeClass('hidden');
           }
 
           function showSection(obj, section) {

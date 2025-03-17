@@ -186,6 +186,15 @@ async fn main() {
                     "fetch_settings" => {
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string()] }).unwrap()));
                     }
+                    "update_settings" => {
+                        let params = &params.unwrap().params;
+                        launcher.config.java_path = params[3].clone();
+                        launcher.config.ram_amount = params[4].parse().unwrap();
+                        launcher.config.show_alpha = params[0].parse().unwrap();
+                        launcher.config.show_beta = params[1].parse().unwrap();
+                        launcher.config.show_snapshots = params[2].parse().unwrap();
+                        launcher.save_config();
+                    }
                     _ => {}
                 }
             }
