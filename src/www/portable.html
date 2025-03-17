@@ -60,7 +60,7 @@
                   <li>
                     <a
                       href="#"
-                      onclick="showSection(this, 'servers')"
+                      onclick="showSection(this, 'servers'); showServersSection()"
                       class="menu-btn group relative flex justify-center rounded-sm px-2 py-1.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                     >
                       <i class="fa-solid fa-network-wired"></i>
@@ -405,13 +405,6 @@
         </div>
 
         <div id="servers-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-            <!--<div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-              <img src="https://eu.mc-api.net/v3/server/favicon/mc.hypixel.net" class="w-12 h-12 rounded-full">
-              <div class="h-fill ms-2">
-                <h2 class="text-lg font-semibold">Hypixel</h2>
-                <h2 class="text-sm font-semibold">mc.hypixel.net</h2>
-              </div>
-            </div>-->
             <div onClick="addServer()" class="bg-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center text-3xl text-green-500 cursor-pointer hover:bg-green-500 hover:text-white"><i class="fa-solid fa-plus"></i></div>
           </div>
         </div>
@@ -443,6 +436,9 @@
                 showInstancesSection();
               } else if( params[i] == "set_instances_list" ) {
                 setInstancesList(params.slice(i+1));
+                break;
+              } else if( params[i] == "fetch_servers_list" ) {
+                setServersList(params.slice(i+1));
                 break;
               } else if( params[i] == "locate_java" ) {
                 setJavaPath(params[i+1]);
@@ -534,6 +530,20 @@
             }
           }
 
+          function setServersList(params) {
+              $(".server-instance").remove();
+              for( let i = 0; i < params.length; i+=3) {
+                let instance = `<div class="server-instance bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+              <img src="`+params[i+2]+`" class="w-12 h-12 rounded-full">
+              <div class="h-fill ms-2">
+                <h2 class="text-lg font-semibold">`+params[i]+`</h2>
+                <h2 class="text-sm font-semibold">`+params[i+1]+`</h2>
+              </div>
+            </div>`;
+                $("#servers-section").append(instance);
+              }
+          }
+
           function updateDownloads(params) {
               let text = params[0];
               let percentage = params[1];
@@ -545,6 +555,10 @@
                 showSection(undefined, "instances");
                 showInstancesSection();
               }
+          }
+
+          function showServersSection() {
+            $.post({url: "fetch_servers_list" }, processParams);
           }
 
           function showInstancesSection() {

@@ -195,6 +195,20 @@ pub mod session {
     }
 }
 
+pub mod server {
+    use std::error::Error;
+
+    use base64::{prelude::BASE64_STANDARD, Engine};
+    use surf::StatusCode;
+
+    pub async fn get_server_icon(server: &str, port: u16) -> Result<Option<String>, Box<dyn Error + Send + Sync>> {
+        let mut r = surf::get(["https://eu.mc-api.net/v3/server/favicon/", server,":", &port.to_string()].concat()).await?;
+        if r.status() != StatusCode::Ok { return Ok(None); }
+        let resp = r.body_bytes().await.unwrap();
+        Ok(Some(["data:image/png;base64,", &BASE64_STANDARD.encode(resp)].concat()))
+    }
+}
+
 pub mod assets {
     use std::{collections::HashMap, error::Error, path::PathBuf};
     use serde::{Deserialize, Serialize};

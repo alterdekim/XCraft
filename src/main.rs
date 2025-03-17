@@ -159,6 +159,18 @@ async fn main() {
 
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
                     }
+                    "fetch_servers_list" => {
+                        let resp = launcher.get_servers_list().await;
+                        let mut v: Vec<String> = Vec::new();
+                        v.push("fetch_servers_list".to_string());
+                        for (domain, nickname, image) in resp {
+                            v.push(domain);
+                            v.push(nickname);
+                            v.push(image.unwrap_or(String::new()));
+                        }
+
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
+                    }
                     "check_download_status" => {
                         if let Ok((percent, text)) = dl_rec.try_recv() {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["update_downloads".to_string(), text, percent.to_string()] }).unwrap()));

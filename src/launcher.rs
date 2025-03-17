@@ -107,6 +107,15 @@ impl Launcher {
         }
     }
 
+    pub async fn get_servers_list(&self) -> Vec<(String, String, Option<String>)> {
+        let mut v = Vec::new();
+        let servers = self.config.servers();
+        for server in servers {
+            v.push((server.domain.clone(), server.credentials.username.clone(), minecraft::server::get_server_icon(&server.domain, server.port).await.unwrap_or(None)));
+        }
+        v
+    }
+
     pub fn get_instances_list(&self) -> Vec<(String, String, String)> {
         let mut v = Vec::new();
         let mut instances = self.config.launcher_dir();

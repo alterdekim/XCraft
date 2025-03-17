@@ -61,6 +61,10 @@ impl LauncherConfig {
         self.user_name = user_name;
     }
 
+    pub fn servers(&self) -> &Vec<LauncherServer> {
+        &self.servers
+    }
+
     pub fn add_server(&mut self, server: LauncherServer) {
         self.servers.push(server);
     }
