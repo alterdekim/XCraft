@@ -92,7 +92,7 @@
                   <li>
                     <a
                       href="#"
-                      onclick="showSection(this, 'screenshots')"
+                      onclick="showSection(this, 'screenshots'); loadScreenshots()"
                       class="menu-btn group relative flex justify-center rounded-sm px-2 py-1.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                     >
                     <i class="fa-solid fa-image"></i>
@@ -128,287 +128,286 @@
 
       <div class="flex flex-col justify-center items-center">
         
-      <div id="popup" role="alert" class="mt-5 rounded-xl border border-gray-100 bg-white p-4 w-96 hidden">
-        <div class="flex items-start gap-4">
-          <span class="text-green-600">
-            <i class="fa-solid fa-info"></i>
-          </span>
-      
-          <div class="flex-1">
-            <p id="popup_text" class="mt-1 text-sm text-gray-700">Your product changes have been saved.</p>
-          </div>
-      
-          <button onClick="dismissPopup()" class="text-gray-500 transition hover:text-gray-600">
-            <span class="sr-only">Dismiss popup</span>
-      
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-6"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
+        <div id="popup" role="alert" class="mt-5 rounded-xl border border-gray-100 bg-white p-4 w-96 hidden">
+          <div class="flex items-start gap-4">
+            <span class="text-green-600">
+              <i class="fa-solid fa-info"></i>
+            </span>
         
-      <div class="flex justify-center items-center w-screen h-screen">
-        <div id="logs-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-          <h2 class="text-2xl font-semibold text-gray-700">Minecraft Logs</h2>
-  
-          <!-- Log Output -->
-          <div id="log-container" class="mt-4 p-2 h-48 overflow-auto bg-gray-200 rounded text-left text-sm text-gray-800 font-mono">
-              <p>[INFO] Initializing Minecraft...</p>
+            <div class="flex-1">
+              <p id="popup_text" class="mt-1 text-sm text-gray-700">Your product changes have been saved.</p>
+            </div>
+        
+            <button onClick="dismissPopup()" class="text-gray-500 transition hover:text-gray-600">
+              <span class="sr-only">Dismiss popup</span>
+        
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-6"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-  
-          <!-- Stop & Back Buttons -->
-          <div class="mt-4 flex gap-2">
-              <button onclick="stopMinecraft()" 
-                  class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition">
-                  Kill
-              </button>
-              <button
-                  class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
-                  Copy logs
-              </button>
-          </div>
-  
-          <p class="mt-4 text-sm text-gray-500">alterdekim</p>
         </div>
         
-        <div id="loading-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h2 class="text-2xl font-semibold text-gray-700">Launching Minecraft</h2>
+        <div class="flex justify-center items-center w-screen h-screen">
+          <div id="logs-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+            <h2 class="text-2xl font-semibold text-gray-700">Minecraft Logs</h2>
     
-            <!-- Loading Status -->
-            <p id="loading-text" class="mt-2 text-gray-500">Preparing...</p>
-    
-            <!-- Progress Bar -->
-            <div class="mt-4 w-full bg-gray-200 rounded-full">
-                <div id="progress-bar" class="h-4 bg-green-500 rounded-full transition-all" style="width: 0%;"></div>
+            <!-- Log Output -->
+            <div id="log-container" class="mt-4 p-2 h-48 overflow-auto bg-gray-200 rounded text-left text-sm text-gray-800 font-mono">
+                <p>[INFO] Initializing Minecraft...</p>
             </div>
     
-            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
-        </div>
-
-        <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
-            <h1 class="text-2xl font-semibold text-gray-700">Welcome to XCraft</h1>
-            <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
-
-            <!-- Portable Mode -->
-            <button onclick="runPortable()"
-                class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
-                Run in Portable Mode
-            </button>
-            <p class="text-sm text-gray-500 mt-1">No installation required. Saves everything in a local folder.</p>
-
-            <!-- Installation Mode -->
-            <button onclick="installMinecraft()"
-                class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                Install Minecraft
-            </button>
-            <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
-        </div>
-
-        <div id="login-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
-
-            <!-- Username -->
-            <input id="sign_up_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> <!-- bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-2 focus:ring-red-500 -->
-            <p class="mt-2 text-sm text-red-600 dark:text-red-500 text-left hidden">Username has invalid characters or too short</p>
-            <!-- Sign In Button -->
-            <button
-                onclick="signUp()"
-                class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                Sign Up
-            </button>
-
-            <!-- Footer -->
-            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
-        </div>
-
-        <div id="add-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h1 class="text-2xl font-semibold text-gray-700">New instance</h1>
-
-            <!-- Version Selection -->
-            <label class="block mt-4 text-gray-600">Select Version:</label>
-            <select id="mc-version" class="mt-2 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-               
-            </select>
-
-            <!-- Download Button -->
-            <button
-                onclick="downloadSelectedVersion()" 
-                class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                <i class="fa-solid fa-download"></i> Download Version
-            </button>
-
-            <!-- OR Divider -->
-            <div class="mt-4 text-gray-500 text-sm">or</div>
-
-            <!-- Add MultiMC Instance -->
-            <button 
-                class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
-                <i class="fa-solid fa-file-zipper"></i> Add MultiMC Instance
-            </button>
-
-            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
-        </div>
-
-        <div id="settings-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h2 class="text-2xl font-semibold text-gray-700">XCraft Settings</h2>
-            
-            <div class="mt-4 flex justify-around text-gray-600">
-                <button onClick="setSettingsTab('launcher')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i></br>Launcher</button>
-                <button onClick="setSettingsTab('appearance')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-palette"></i></br>Appearance</button>
-                <button onClick="setSettingsTab('java')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i></br>Java</button>
-            </div>
-            
-            <div id="launcher-settings" class="settings-tab mt-4">
-                <div class="mt-4 flex justify-between items-center">
-                  <label class="inline-flex items-center cursor-pointer">
-                    <input id="show-beta" type="checkbox" value="" class="sr-only peer">
-                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
-                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show beta versions</span>
-                  </label>
-                </div>
-                <div class="mt-4 flex justify-between items-center">
-                  <label class="inline-flex items-center cursor-pointer">
-                    <input id="show-alpha" type="checkbox" value="" class="sr-only peer">
-                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
-                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show alpha versions</span>
-                  </label>
-                </div>
-                <div class="mt-4 flex justify-between items-center">
-                  <label class="inline-flex items-center cursor-pointer">
-                    <input id="show-snapshots" type="checkbox" value="" class="sr-only peer">
-                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
-                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show snapshots</span>
-                  </label>
-                </div>
-            </div>
-
-            <div id="appearance-settings" class="settings-tab mt-4 hidden">
-              <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                <input type="file" id="bg-picker" class="hidden" accept=".jpg, .jpeg, .png" onchange="bgSelected(event)">
-                <input id="background-path" type="text" placeholder="Custom background name"
-                    class="flex-1 px-4 py-2 focus:outline-none">
-                <button onclick="$('#bg-picker').click()" 
-                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
-                    Set
+            <!-- Stop & Back Buttons -->
+            <div class="mt-4 flex gap-2">
+                <button
+                    class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
+                    Copy logs
                 </button>
             </div>
-            </div>
-
-            <div id="java-settings" class="settings-tab mt-4 hidden">
-                <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                  <input id="java-path" type="text" placeholder="Enter Java Path"
-                      class="flex-1 px-4 py-2 focus:outline-none">
-                  <button onclick="locateJava()" 
-                      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
-                      Auto
-                  </button>
-              </div>
-              <label for="ram-input" class="block mb-2 text-sm font-medium text-gray-800 dark:text-white">Allocate memory (MB):</label>
-              <input type="number" id="ram-input" min="1024" step="1" aria-describedby="helper-text-explanation" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5" placeholder="1024" value="1024" required />
-            </div>
-
-            <button 
-                onClick="saveSettings()" class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                <i class="fa-solid fa-floppy-disk"></i> Save
-            </button>
-
+    
             <p class="mt-4 text-sm text-gray-500">alterdekim</p>
-        </div>
-
-        <div id="appearance-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-          <h2 class="text-2xl font-semibold text-gray-700">Account Settings</h2>
+          </div>
           
-          <div class="mt-6 text-left">
-            <label class="text-gray-600 font-medium">Offline username</label>
-            <input type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-        </div>
-
-          <!-- Skin Upload -->
-          <div class="mt-6 text-left">
-              <label class="text-gray-600 font-medium">Minecraft Skin</label>
-              <div class="mt-2 flex items-center gap-4">
-                  <img id="skin-preview" src="https://www.mc-heads.net/avatar/notch" class="w-16 h-16 rounded-md border" alt="Skin Preview">
-                  <input id="skin-upload" type="file" accept=".png" class="hidden" onchange="previewSkin()">
-                  <button onclick="document.getElementById('skin-upload').click()" 
-                      class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
-                      Upload
-                  </button>
+          <div id="loading-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+              <h2 class="text-2xl font-semibold text-gray-700">Launching Minecraft</h2>
+      
+              <p id="loading-text" class="mt-2 text-gray-500">Preparing...</p>
+      
+              <div class="mt-4 w-full bg-gray-200 rounded-full">
+                  <div id="progress-bar" class="h-4 bg-green-500 rounded-full transition-all" style="width: 0%;"></div>
               </div>
+      
+              <p class="mt-4 text-sm text-gray-500">alterdekim</p>
           </div>
-  
-          <!-- Cape Upload -->
-          <div class="mt-6 text-left">
-              <label class="text-gray-600 font-medium">Minecraft Cape</label>
-              <div class="mt-2 flex items-center gap-4">
-                  <img id="cape-preview" src="https://skinmc.net/capes/77863/download" class="w-16 h-16 rounded-md border" alt="Cape Preview">
-                  <input id="cape-upload" type="file" accept=".png" class="hidden" onchange="previewCape()">
-                  <button onclick="document.getElementById('cape-upload').click()" 
-                      class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
-                      Upload
-                  </button>
+
+          <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+              <h1 class="text-2xl font-semibold text-gray-700">Welcome to XCraft</h1>
+              <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
+
+              <button onclick="runPortable()"
+                  class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                  Run in Portable Mode
+              </button>
+              <p class="text-sm text-gray-500 mt-1">No installation required. Saves everything in a local folder.</p>
+
+              <button onclick="installMinecraft()"
+                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                  Install Minecraft
+              </button>
+              <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
+          </div>
+
+          <div id="login-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+              <h2 class="text-2xl font-semibold text-gray-700">CraftX v1.0</h2>
+
+            
+              <input id="sign_up_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> <!-- bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-2 focus:ring-red-500 -->
+              <p class="mt-2 text-sm text-red-600 dark:text-red-500 text-left hidden">Username has invalid characters or too short</p>
+         
+              <button
+                  onclick="signUp()"
+                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                  Sign Up
+              </button>
+
+           
+              <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+          </div>
+
+          <div id="add-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+              <h1 class="text-2xl font-semibold text-gray-700">New instance</h1>
+
+              <label class="block mt-4 text-gray-600">Select Version:</label>
+              <select id="mc-version" class="mt-2 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                
+              </select>
+
+              <button
+                  onclick="downloadSelectedVersion()" 
+                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                  <i class="fa-solid fa-download"></i> Download Version
+              </button>
+
+              <div class="mt-4 text-gray-500 text-sm">or</div>
+
+              <button 
+                  class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                  <i class="fa-solid fa-file-zipper"></i> Add MultiMC Instance
+              </button>
+
+              <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+          </div>
+
+          <div id="settings-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+              <h2 class="text-2xl font-semibold text-gray-700">XCraft Settings</h2>
+              
+              <div class="mt-4 flex justify-around text-gray-600">
+                  <button onClick="setSettingsTab('launcher')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-rocket"></i></br>Launcher</button>
+                  <button onClick="setSettingsTab('appearance')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-palette"></i></br>Appearance</button>
+                  <button onClick="setSettingsTab('java')" class="py-2 px-4 focus:text-green-500"><i class="fa-solid fa-mug-hot"></i></br>Java</button>
               </div>
-          </div>
-  
-          <!-- Save Button -->
-          <button
-              class="mt-6 w-full bg-green-500 hover:bg-green-700 text-white py-2 rounded font-bold transition">
-              Save Settings
-          </button>
-      </div>
+              
+              <div id="launcher-settings" class="settings-tab mt-4">
+                  <div class="mt-4 flex justify-between items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input id="show-beta" type="checkbox" value="" class="sr-only peer">
+                      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                      <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show beta versions</span>
+                    </label>
+                  </div>
+                  <div class="mt-4 flex justify-between items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input id="show-alpha" type="checkbox" value="" class="sr-only peer">
+                      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                      <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show alpha versions</span>
+                    </label>
+                  </div>
+                  <div class="mt-4 flex justify-between items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input id="show-snapshots" type="checkbox" value="" class="sr-only peer">
+                      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                      <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show snapshots</span>
+                    </label>
+                  </div>
+              </div>
 
-        <div id="accounts-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-          <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-            <img src="https://www.mc-heads.net/avatar/MHF_Steve" class="w-12 h-12 rounded-full">
-            <div class="h-fill ms-2">
-              <h2 class="text-lg font-semibold">DartJevder</h2>
-              <h2 class="text-sm font-semibold">Blatnoe Pivo</h2>
+              <div id="appearance-settings" class="settings-tab mt-4 hidden">
+                <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <input type="file" id="bg-picker" class="hidden" accept=".jpg, .jpeg, .png" onchange="bgSelected(event)">
+                  <input id="background-path" type="text" placeholder="Custom background name"
+                      class="flex-1 px-4 py-2 focus:outline-none">
+                  <button onclick="$('#bg-picker').click()" 
+                      class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
+                      Set
+                  </button>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input id="enable-blur" type="checkbox" value="" class="sr-only peer">
+                    <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Enable blur</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="java-settings" class="settings-tab mt-4 hidden">
+                  <div class="mt-4 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <input id="java-path" type="text" placeholder="Enter Java Path"
+                        class="flex-1 px-4 py-2 focus:outline-none">
+                    <button onclick="locateJava()" 
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 font-bold transition">
+                        Auto
+                    </button>
+                </div>
+                <label for="ram-input" class="block mb-2 text-sm font-medium text-gray-800 dark:text-white">Allocate memory (MB):</label>
+                <input type="number" id="ram-input" min="1024" step="1" aria-describedby="helper-text-explanation" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5" placeholder="1024" value="1024" required />
+              </div>
+
+              <button 
+                  onClick="saveSettings()" class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                  <i class="fa-solid fa-floppy-disk"></i> Save
+              </button>
+
+              <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+          </div>
+
+          <div id="appearance-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+            <h2 class="text-2xl font-semibold text-gray-700">Account Settings</h2>
+            
+            <div class="mt-6 text-left">
+              <label class="text-gray-600 font-medium">Offline username</label>
+              <input type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+          </div>
+
+            <!-- Skin Upload -->
+            <div class="mt-6 text-left">
+                <label class="text-gray-600 font-medium">Minecraft Skin</label>
+                <div class="mt-2 flex items-center gap-4">
+                    <img id="skin-preview" src="https://www.mc-heads.net/avatar/notch" class="w-16 h-16 rounded-md border" alt="Skin Preview">
+                    <input id="skin-upload" type="file" accept=".png" class="hidden" onchange="previewSkin()">
+                    <button onclick="document.getElementById('skin-upload').click()" 
+                        class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
+                        Upload
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-
-        <div id="instances-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-          <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-            <img src="" class="w-12 h-12 rounded-full">
-            <div class="h-fill ms-2">
-              <h2 class="text-lg font-semibold">Release</h2>
-              <h2 class="text-sm font-semibold">1.12.2</h2>
+    
+            <!-- Cape Upload -->
+            <div class="mt-6 text-left">
+                <label class="text-gray-600 font-medium">Minecraft Cape</label>
+                <div class="mt-2 flex items-center gap-4">
+                    <img id="cape-preview" src="https://skinmc.net/capes/77863/download" class="w-16 h-16 rounded-md border" alt="Cape Preview">
+                    <input id="cape-upload" type="file" accept=".png" class="hidden" onchange="previewCape()">
+                    <button onclick="document.getElementById('cape-upload').click()" 
+                        class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
+                        Upload
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-
-        <div id="add-server-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-          <h2 class="text-2xl font-semibold text-gray-700">Add Server</h2>
-            <input id="server_address" type="text" placeholder="127.0.0.1:25565#8999" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <p class="mt-2 text-sm text-green-500 text-left">XCraft servers are using their own session servers, to specify its port, use #PORT, or don't if it's 8999</p>
-
-            <input id="server_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> <!-- bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-2 focus:ring-red-500 -->
-            <p class="mt-2 text-sm text-red-600 dark:text-red-500 text-left hidden">Username has invalid characters or too short</p>
-
-            <input id="server_password" type="password" placeholder="Password" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <!-- Sign In Button -->
+    
+            <!-- Save Button -->
             <button
-                onclick="addServerInstance()"
-                class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                Add
+                class="mt-6 w-full bg-green-500 hover:bg-green-700 text-white py-2 rounded font-bold transition">
+                Save Settings
             </button>
+          </div>
 
-            <!-- Footer -->
-            <p class="mt-4 text-sm text-gray-500">alterdekim</p>
-        </div>
+          <div id="accounts-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
+            <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+              <img src="https://www.mc-heads.net/avatar/MHF_Steve" class="w-12 h-12 rounded-full">
+              <div class="h-fill ms-2">
+                <h2 class="text-lg font-semibold">DartJevder</h2>
+                <h2 class="text-sm font-semibold">Blatnoe Pivo</h2>
+              </div>
+            </div>
+          </div>
 
-        <div id="servers-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-            <div onClick="addServer()" class="bg-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center text-3xl text-green-500 cursor-pointer hover:bg-green-500 hover:text-white"><i class="fa-solid fa-plus"></i></div>
+          <div id="instances-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
+            <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+              <img src="" class="w-12 h-12 rounded-full">
+              <div class="h-fill ms-2">
+                <h2 class="text-lg font-semibold">Release</h2>
+                <h2 class="text-sm font-semibold">1.12.2</h2>
+              </div>
+            </div>
+          </div>
+
+          <div id="screenshots-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill h-screen overflow-y-auto hidden">
+            
+          </div>
+
+          <div id="add-server-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
+            <h2 class="text-2xl font-semibold text-gray-700">Add Server</h2>
+              <input id="server_address" type="text" placeholder="127.0.0.1:25565#8999" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <p class="mt-2 text-sm text-green-500 text-left">XCraft servers are using their own session servers, to specify its port, use #PORT, or don't if it's 8999</p>
+
+              <input id="server_username" type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"> <!-- bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-2 focus:ring-red-500 -->
+              <p class="mt-2 text-sm text-red-600 dark:text-red-500 text-left hidden">Username has invalid characters or too short</p>
+
+              <input id="server_password" type="password" placeholder="Password" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <!-- Sign In Button -->
+              <button
+                  onclick="addServerInstance()"
+                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                  Add
+              </button>
+
+              <!-- Footer -->
+              <p class="mt-4 text-sm text-gray-500">alterdekim</p>
+          </div>
+
+          <div id="servers-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
+              <div onClick="addServer()" class="bg-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center text-3xl text-green-500 cursor-pointer hover:bg-green-500 hover:text-white"><i class="fa-solid fa-plus"></i></div>
           </div>
         </div>
-        </div>
+      </div>
       </div>
 
       <script type="text/javascript">
@@ -449,8 +448,41 @@
               } else if( params[i] == "fetch_settings_response" ) {
                 setSettings(params.slice(i+1));
                 break;
+              } else if( params[i] == "load_screenshots" ) {
+                setScreenshots(params.slice(i+1));
+                break;
+              } else if( params[i] == "fetch_bg") {
+                setBackground(params[i+1]);
+                i++;
               }
             }
+          }
+
+          function setBackground(bg) {
+            $("body").removeClass("bg-gray-100");
+            $("body").css("background-image", 'url("'+bg+'")');
+            $("body").css("background-size", "cover");
+            $("body").css("background-repeat", "no-repeat");
+            $("body").css("background-position", "center center"); 
+          }
+
+          function setScreenshots(params) {
+            $("#screenshots-section").html("");
+            for( let i = 0; i < params.length; i+=2 ) {
+              $("#screenshots-section").append(
+                `<div onclick="openFile('`+params[i].replaceAll("\\", "\\\\")+`')" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-[7rem] flex justify-center items-center">
+                  <img src="`+params[i+1]+`" class="w-fill h-fill rounded-xl">
+                </div>`
+              );
+            }
+          }
+
+          function openFile(path) {
+            $.post({url: "open_file", data: JSON.stringify({ params: [path] })}, processParams);
+          }
+
+          function loadScreenshots() {
+            $.post({url: "load_screenshots" }, processParams);
           }
 
           function bgSelected(event) {
@@ -459,6 +491,11 @@
               let allowedTypes = ["image/jpeg", "image/png"];
               if (allowedTypes.includes(file.type)) {
                 $("#background-path").val(file.name);
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                  $.post({url: "save_bg", data: JSON.stringify({ params: [e.target.result] })}, processParams);
+                }
+                reader.readAsDataURL(file);
               } else {
                 showPopup("This format is not allowed!");
               }
@@ -471,7 +508,8 @@
             let show_snapshots = $("#show-snapshots").prop('checked');
             let java_path = $("#java-path").val();
             let ram_input = $("#ram-input").val();
-            $.post({url: "update_settings", data: JSON.stringify({ params: [show_alpha+"", show_beta+"", show_snapshots+"", java_path, ram_input+""] }) }, processParams);
+            let enable_blur = $("#enable-blur").prop('checked');
+            $.post({url: "update_settings", data: JSON.stringify({ params: [show_alpha+"", show_beta+"", show_snapshots+"", java_path, ram_input+"", enable_blur+""] }) }, processParams);
             showPopup("Saved!");
           }
 
@@ -481,6 +519,17 @@
               $("#show-snapshots").prop('checked', (params[2] === 'true'));
               $("#java-path").val(params[3]);
               $("#ram-input").val(params[4]);
+              $("#enable-blur").prop('checked', (params[5] == 'true'));
+              if( params[5] == 'true' ) {
+                enableBlur();
+              }
+          }
+
+          function enableBlur() {
+            $(".xsection").removeClass("bg-white");
+            $(".xsection").addClass("backdrop-blur-md");
+            $("#sidebar").removeClass("bg-white");
+            $("#sidebar").addClass("backdrop-blur-md");
           }
 
           function dismissPopup() {
@@ -567,6 +616,7 @@
 
           function runInstance(version) {
             $.post({url: "run_instance", data: JSON.stringify({ params: [version] })}, processParams);
+            showSection(undefined, "logs");
           }
 
           function downloadSelectedVersion() {
@@ -623,6 +673,7 @@
           $( document ).ready(async function() {
             $.get("check_installation", processParams);
             $.get("fetch_settings", processParams);
+            $.get("fetch_bg", processParams);
             setInterval(function() {
                 if( !$("#loading-section").hasClass("hidden") ) {
                   $.get("check_download_status", processParams);

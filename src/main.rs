@@ -1,8 +1,11 @@
 use std::sync::{Arc, Mutex};
 
+use base64::prelude::{BASE64_STANDARD, BASE64_STANDARD_NO_PAD};
+use base64::Engine;
 use config::LauncherConfig;
 use launcher::Launcher;
 use serde::{Deserialize, Serialize};
+use tokio::process::Command;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use winit::application::ApplicationHandler;
@@ -196,7 +199,20 @@ async fn main() {
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), status.to_string(), msg.to_string()] }).unwrap()));
                     }
                     "fetch_settings" => {
-                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string()] }).unwrap()));
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string(), launcher.config.enable_blur.to_string()] }).unwrap()));
+                    }
+                    "save_bg" => {
+                        let params = &params.unwrap().params;
+                        let mut p = launcher.config.launcher_dir();
+                        p.push("bg.base64");
+                        let _ = std::fs::write(p, &params[0]);
+                    }
+                    "fetch_bg" => {
+                        let mut p = launcher.config.launcher_dir();
+                        p.push("bg.base64");
+                        if let Ok(data) = std::fs::read(p) {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_bg".to_string(), String::from_utf8(data).unwrap()] }).unwrap()));
+                        }
                     }
                     "update_settings" => {
                         let params = &params.unwrap().params;
@@ -205,7 +221,21 @@ async fn main() {
                         launcher.config.show_alpha = params[0].parse().unwrap();
                         launcher.config.show_beta = params[1].parse().unwrap();
                         launcher.config.show_snapshots = params[2].parse().unwrap();
+                        launcher.config.enable_blur = params[5].parse().unwrap();
                         launcher.save_config();
+                    }
+                    "open_file" => {
+                        let params = &params.unwrap().params;
+                        let _ = Command::new("cmd").args(["/C", "start", &params[0]]).spawn();
+                    }
+                    "load_screenshots" => {
+                        let screenshots = launcher.get_screenshots();
+                        let mut svec = Vec::new();
+                        for (path,data) in screenshots {
+                            svec.push(path);
+                            svec.push(data);
+                        }
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [vec!["load_screenshots".to_string()], svec].concat() }).unwrap()));
                     }
                     _ => {}
                 }

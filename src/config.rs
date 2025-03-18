@@ -26,12 +26,13 @@ pub struct LauncherConfig {
     pub show_beta: bool,
     pub show_snapshots: bool,
     pub ram_amount: u32,
+    pub enable_blur: bool,
     servers: Vec<LauncherServer>
 }
 
 impl Default for LauncherConfig {
     fn default() -> Self {
-        Self { is_portable: Default::default(), user_name: Default::default(), java_path: "java".to_string(), show_alpha: true, show_beta: true, show_snapshots: false, ram_amount: 1024, servers: Default::default() }
+        Self { is_portable: Default::default(), user_name: Default::default(), java_path: "java".to_string(), show_alpha: true, show_beta: true, show_snapshots: false, ram_amount: 1024, servers: Default::default(), enable_blur: Default::default() }
     }
 }
 

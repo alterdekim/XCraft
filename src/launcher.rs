@@ -143,6 +143,33 @@ impl Launcher {
         v
     }
 
+    pub fn get_screenshots(&self) -> Vec<(String, String)> {
+        let mut v = Vec::new();
+        let mut instances = self.config.launcher_dir();
+        instances.push("instances");
+        if let Ok(entries) = std::fs::read_dir(instances) {
+            for entry in entries {
+                if entry.is_err() { continue; }
+                let entry = entry.unwrap();
+                if !entry.metadata().unwrap().is_dir() { continue; }
+                let mut p = entry.path();
+                p.push("data");
+                p.push("screenshots");
+                if !p.exists() { continue; }
+                if let Ok(screenshots) = std::fs::read_dir(p) {
+                    for screenshot in screenshots {
+                        if let Ok(screenshot) = screenshot {
+                            if screenshot.file_name().to_str().unwrap().ends_with("png") {
+                                v.push((screenshot.path().to_str().unwrap().to_string(), format!("data:image/png;base64,{}", BASE64_STANDARD.encode(std::fs::read(screenshot.path()).unwrap()))));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        v
+    }
+
     pub async fn launch_instance(&self, instance_name: String, username: String, uuid: String, token: String) {
         let mut instances = self.config.launcher_dir();
         instances.push("instances");
@@ -154,7 +181,15 @@ impl Launcher {
         client_jar.push(&instance_name);
         client_jar.push("client.jar");
 
+        let mut instance_dir = self.config.launcher_dir();
+        instance_dir.push("instances");
+        instance_dir.push(&instance_name);
+        instance_dir.push("data");
+
         let mut cmd = Command::new(&self.config.java_path);
+        cmd.current_dir(instance_dir);
+        cmd.stdout(std::process::Stdio::piped());
+
         
         for arg in JAVA_ARGS {
             cmd.arg(arg.to_string());
@@ -204,7 +239,16 @@ impl Launcher {
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
             cmd.args(&["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
-            cmd.spawn();
+            let child = cmd.spawn().unwrap();
+
+            /*if let Some(stdout) = child.stdout.take() {
+                let reader = BufReader::new(stdout);
+                let mut lines = reader.lines();
+        
+                while let Ok(Some(line)) = lines.next_line().await {
+                    println!("Line: {}", line);
+                }
+            }*/
         }
     }
 
