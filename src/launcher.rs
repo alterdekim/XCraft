@@ -3,6 +3,7 @@ use std::io::Cursor;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use tokio::fs::File;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
@@ -170,7 +171,7 @@ impl Launcher {
         v
     }
 
-    pub async fn launch_instance(&self, instance_name: String, username: String, uuid: String, token: String) {
+    pub async fn launch_instance(&self, instance_name: String, username: String, uuid: String, token: String, sender: UnboundedSender<String>) {
         let mut instances = self.config.launcher_dir();
         instances.push("instances");
         instances.push(&instance_name);
@@ -189,6 +190,7 @@ impl Launcher {
         let mut cmd = Command::new(&self.config.java_path);
         cmd.current_dir(instance_dir);
         cmd.stdout(std::process::Stdio::piped());
+        cmd.stderr(std::process::Stdio::inherit());
 
         
         for arg in JAVA_ARGS {
@@ -239,16 +241,18 @@ impl Launcher {
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
             cmd.args(&["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
-            let child = cmd.spawn().unwrap();
+            let mut child = cmd.spawn().unwrap();
 
-            /*if let Some(stdout) = child.stdout.take() {
-                let reader = BufReader::new(stdout);
-                let mut lines = reader.lines();
-        
-                while let Ok(Some(line)) = lines.next_line().await {
-                    println!("Line: {}", line);
+            tokio::spawn(async move {
+                if let Some(stdout) = child.stdout.take() {
+                    let reader = BufReader::new(stdout);
+                    let mut lines = reader.lines();
+            
+                    while let Ok(Some(line)) = lines.next_line().await {
+                        let _ = sender.send(line);
+                    }
                 }
-            }*/
+            });
         }
     }
 

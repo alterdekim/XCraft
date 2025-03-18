@@ -161,15 +161,7 @@
     
             <!-- Log Output -->
             <div id="log-container" class="mt-4 p-2 h-48 overflow-auto bg-gray-200 rounded text-left text-sm text-gray-800 font-mono">
-                <p>[INFO] Initializing Minecraft...</p>
-            </div>
-    
-            <!-- Stop & Back Buttons -->
-            <div class="mt-4 flex gap-2">
-                <button
-                    class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">
-                    Copy logs
-                </button>
+                
             </div>
     
             <p class="mt-4 text-sm text-gray-500">alterdekim</p>
@@ -454,8 +446,16 @@
               } else if( params[i] == "fetch_bg") {
                 setBackground(params[i+1]);
                 i++;
+              } else if( params[i] == "update_logs" ) {
+                updateLogs(params[i+1]);
+                break;
               }
             }
+          }
+
+          function updateLogs(text) {
+            $("#log-container").append("<p>"+text+"</p>");
+            $("#log-container").scrollTop($("#log-container")[0].scrollHeight);
           }
 
           function setBackground(bg) {
@@ -615,6 +615,7 @@
           }
 
           function runInstance(version) {
+            $("#log-container").html("");
             $.post({url: "run_instance", data: JSON.stringify({ params: [version] })}, processParams);
             showSection(undefined, "logs");
           }
@@ -677,6 +678,9 @@
             setInterval(function() {
                 if( !$("#loading-section").hasClass("hidden") ) {
                   $.get("check_download_status", processParams);
+                }
+                if( !$("#logs-section").hasClass("hidden") ) {
+                  $.get("check_logs_status", processParams);
                 }
             }, 10);
           });

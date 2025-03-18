@@ -80,6 +80,7 @@ async fn main() {
         let mut launcher = Launcher::default();
 
         let (sx, mut dl_rec) = mpsc::unbounded_channel();
+        let (mut lx, mut logs_rec) = mpsc::unbounded_channel();
 
         loop {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
@@ -181,9 +182,18 @@ async fn main() {
                             responder.respond(Response::new(vec![]));
                         }
                     }
+                    "check_logs_status" => {
+                        if let Ok(text) = logs_rec.try_recv() {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["update_logs".to_string(), text] }).unwrap()));
+                        } else {
+                            responder.respond(Response::new(vec![]));
+                        }
+                    }
                     "run_instance" => {
                         let instance_name = params.unwrap().params[0].clone();
-                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32)).await;
+                        logs_rec.close();
+                        (lx, logs_rec) = mpsc::unbounded_channel();
+                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone()).await;
                     }
                     "locate_java" => {
                         if let Ok(java_path) = java_locator::locate_file("java.exe") {
