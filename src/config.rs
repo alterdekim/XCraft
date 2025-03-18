@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LauncherCredentials {
     pub uuid: String,
     pub username: String,
     pub password: String
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LauncherServer {
     pub domain: String, 
     pub port: u16,

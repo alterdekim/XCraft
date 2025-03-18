@@ -158,11 +158,10 @@ impl Launcher {
                 p.push("screenshots");
                 if !p.exists() { continue; }
                 if let Ok(screenshots) = std::fs::read_dir(p) {
-                    for screenshot in screenshots {
-                        if let Ok(screenshot) = screenshot {
-                            if screenshot.file_name().to_str().unwrap().ends_with("png") {
-                                v.push((screenshot.path().to_str().unwrap().to_string(), format!("data:image/png;base64,{}", BASE64_STANDARD.encode(std::fs::read(screenshot.path()).unwrap()))));
-                            }
+                    let tmp = screenshots;
+                    for screenshot in tmp.flatten() {
+                        if screenshot.file_name().to_str().unwrap().ends_with("png") {
+                            v.push((screenshot.path().to_str().unwrap().to_string(), format!("data:image/png;base64,{}", BASE64_STANDARD.encode(std::fs::read(screenshot.path()).unwrap()))));
                         }
                     }
                 }
@@ -171,7 +170,13 @@ impl Launcher {
         v
     }
 
-    pub async fn launch_instance(&self, instance_name: String, username: String, uuid: String, token: String, sender: UnboundedSender<String>) {
+    pub async fn launch_instance(&self, instance_name: String, mut username: String, mut uuid: String, mut token: String, sender: UnboundedSender<String>, special_server: Option<&LauncherServer> ) {
+        if let Some(server) = special_server {
+            username = server.credentials.username.clone();
+            uuid = server.credentials.uuid.clone();
+            token = server.credentials.password.clone();
+        }
+        
         let mut instances = self.config.launcher_dir();
         instances.push("instances");
         instances.push(&instance_name);
@@ -186,15 +191,16 @@ impl Launcher {
         instance_dir.push("instances");
         instance_dir.push(&instance_name);
         instance_dir.push("data");
+        let _ = std::fs::create_dir_all(&instance_dir);
 
         let mut cmd = Command::new(&self.config.java_path);
         cmd.current_dir(instance_dir);
         cmd.stdout(std::process::Stdio::piped());
-        cmd.stderr(std::process::Stdio::inherit());
+        cmd.stderr(std::process::Stdio::piped());
 
         
         for arg in JAVA_ARGS {
-            cmd.arg(arg.to_string());
+            cmd.arg(arg);
         }
         
         cmd.arg(["-Xmx", &self.config.ram_amount.to_string(), "M"].concat());
@@ -206,7 +212,7 @@ impl Launcher {
 
         cmd.arg(["-Djava.library.path=", natives_path.to_str().unwrap() ].concat());
         cmd.arg(["-Dminecraft.client.jar=", client_jar.to_str().unwrap()].concat());
-        cmd.arg("-cp".to_string());
+        cmd.arg("-cp");
 
         if let Ok(data) = std::fs::read(&instances) {
             let config: VersionConfig = serde_json::from_slice(&data).unwrap();
@@ -220,17 +226,29 @@ impl Launcher {
                         let rel_path = [libs.to_str().unwrap(), "\\", &rel_path.replace("/", "\\")].concat();
                         let data = std::fs::read(rel_path).unwrap();
 
-                        zip_extract::extract(Cursor::new(data), &natives_path, true);
+                        let _ = zip_extract::extract(Cursor::new(data), &natives_path, true);
                     }
                 } else {
                     let mut libs = self.config.launcher_dir();
                     libs.push("libraries");
-                    libs.push(library.to_pathbuf_file());
+                    libs.push(library.to_pathbuf_file(false));
+                    if library.name.contains("com.mojang:authlib") {
+                        if let Some(server) = special_server {
+                            let mut patched_auth = self.config.launcher_dir();
+                            patched_auth.push("libraries");
+                            patched_auth.push(library.to_pathbuf_file(true));
+                            let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), &["http://", &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat());
+                            libraries_cmd.push([patched_auth.to_str().unwrap(), ";"].concat());
+                            println!("{:?}", patched_auth.to_str().unwrap());
+                            continue;
+                        }
+                    }
                     libraries_cmd.push([libs.to_str().unwrap(), ";"].concat());
                 }
             }
             libraries_cmd.push(client_jar.to_str().unwrap().to_string());
             cmd.arg(libraries_cmd.concat());
+            println!("{:?}", libraries_cmd);
             cmd.arg(config.mainClass.clone());
 
             let mut game_dir = self.config.launcher_dir();
@@ -240,16 +258,37 @@ impl Launcher {
 
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
-            cmd.args(&["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            cmd.args(["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            if let Some(server) = special_server {
+                cmd.arg("--server");
+                cmd.arg(&server.domain);
+                cmd.arg("--port");
+                cmd.arg(server.port.to_string());
+            }
             let mut child = cmd.spawn().unwrap();
 
             tokio::spawn(async move {
+                
                 if let Some(stdout) = child.stdout.take() {
-                    let reader = BufReader::new(stdout);
-                    let mut lines = reader.lines();
-            
-                    while let Ok(Some(line)) = lines.next_line().await {
-                        let _ = sender.send(line);
+                    if let Some(stderr) = child.stderr.take() {
+                        let out_reader = BufReader::new(stdout);
+                        let mut out_lines = out_reader.lines();
+
+                        let err_reader = BufReader::new(stderr);
+                        let mut err_lines = err_reader.lines();
+                
+                        loop {
+                            tokio::select! {
+                                Ok(Some(line)) = out_lines.next_line() => {
+                                    let _ = sender.send(line);
+                                }
+                                Ok(Some(line)) = err_lines.next_line() => {
+                                    let _ = sender.send(line);
+                                }
+                                else => break,
+                            }
+                        }
+                        // end of minecraft launch
                     }
                 }
             });
@@ -296,7 +335,7 @@ impl Launcher {
                 let mut dl_pp = libraries.clone();
                 dl_pp.push(library.to_pathbuf_path());
                 let _ = std::fs::create_dir_all(dl_pp);
-                dl_path.push(library.to_pathbuf_file());
+                dl_path.push(library.to_pathbuf_file(false));
                 if File::open(dl_path.to_str().unwrap()).await.is_err() {
                     overall_size += artifact.size as usize;
                     let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries");
@@ -350,10 +389,10 @@ impl Launcher {
 
             let mut single_object_path = assets_path.clone();
             single_object_path.push(asset.to_small_path());
-            std::fs::create_dir_all(single_object_path);
+            let _ = std::fs::create_dir_all(single_object_path);
 
             if File::open(single_object.to_str().unwrap()).await.is_err() {
-                util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects");
+                let _ = util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects");
                 cnt += 1;
             }
         }
@@ -364,9 +403,9 @@ impl Launcher {
             while let Some((size, status)) = rx.recv().await {
                 current_size += size;
                 current_cnt += 1;
-                sender.send((((current_size as f32 / overall_size as f32) * 100.0) as u8, status));
+                let _ = sender.send((((current_size as f32 / overall_size as f32) * 100.0) as u8, status));
                 if current_cnt >= cnt {
-                    sender.send((100, "_".to_string()));
+                    let _ = sender.send((100, "_".to_string()));
                 }
             }
         });

@@ -1,21 +1,17 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
-use base64::prelude::{BASE64_STANDARD, BASE64_STANDARD_NO_PAD};
-use base64::Engine;
-use config::LauncherConfig;
 use launcher::Launcher;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tokio::runtime::Runtime;
-use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{self, UnboundedSender};
 use winit::application::ApplicationHandler;
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::event::{Event, WindowEvent};
-use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
+use winit::event_loop::EventLoop;
+use winit::event::WindowEvent;
 use winit::window::{Window, WindowId};
 use winit::event_loop::ActiveEventLoop;
 use wry::dpi::LogicalSize;
-use wry::http::{version, Request, Response};
+use wry::http::Response;
 use wry::{RequestAsyncResponder, WebView, WebViewBuilder};
 
 mod config;
@@ -57,11 +53,8 @@ impl ApplicationHandler for App {
   }
 
   fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
-        match event {
-            WindowEvent::CloseRequested => {
-                event_loop.exit();
-            },
-            _ => {}
+        if event == WindowEvent::CloseRequested {
+            event_loop.exit();
         }
   }
 }
@@ -109,21 +102,17 @@ async fn main() {
                         }
                     }
                     "sign_up" => {
-                        let user_name = params.as_ref().unwrap().params.get(0).unwrap();
+                        let user_name = params.as_ref().unwrap().params.first().unwrap();
                         launcher.init_config(user_name.to_string());
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_add".to_string(), "sidebar_on".to_string()] }).unwrap()));
                     }
                     "fetch_official_versions" => {
                         if let Ok(versions) = crate::minecraft::versions::fetch_versions_list().await {
                             let versions: Vec<String> = versions.versions.iter().filter(|t| {
-                                if !launcher.config.show_alpha && t.r#type == "old_alpha" {
-                                    return false;
-                                } else if !launcher.config.show_beta && t.r#type == "old_beta" {
-                                    return false;
-                                } else if !launcher.config.show_snapshots && t.r#type == "snapshot" {
+                                if (!launcher.config.show_alpha && t.r#type == "old_alpha") || (!launcher.config.show_beta && t.r#type == "old_beta") || (!launcher.config.show_snapshots && t.r#type == "snapshot") {
                                     return false;
                                 }
-                                return true;
+                                true
                             }).map(|t| t.id.clone()).collect();
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [ vec!["set_downloadable_versions".to_string()], versions ].concat() }).unwrap()));
                         } else {
@@ -132,15 +121,11 @@ async fn main() {
                     }
                     "download_vanilla" => {
                         let version = params.unwrap().params[0].clone();
-                        println!("Version: {}", version);
                         if let Ok(versions) = crate::minecraft::versions::fetch_versions_list().await {
-                            println!("Got versions");
                             let version = versions.versions.iter().find(|t| t.id.clone() == version);
                             if let Some(version) = version {
-                                println!("Found");
                                 match crate::minecraft::versions::fetch_version_object(version).await {
                                     Ok(config ) => {
-                                        println!("Config: {}", config.id);
                                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string(), "sidebar_off".to_string()] }).unwrap()));
                                         launcher.new_vanilla_instance(config, version, sx.clone()).await;
                                     }
@@ -193,7 +178,17 @@ async fn main() {
                         let instance_name = params.unwrap().params[0].clone();
                         logs_rec.close();
                         (lx, logs_rec) = mpsc::unbounded_channel();
-                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone()).await;
+                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone(), None).await;
+                    }
+                    "run_server_instance" => {
+                        let params = params.unwrap().params;
+                        let instance_name = params[0].clone();
+                        let domain = params[1].clone();
+                        let nickname = params[2].clone();
+                        logs_rec.close();
+                        (lx, logs_rec) = mpsc::unbounded_channel();
+                        let s = launcher.config.servers().iter().find(|s| s.domain == domain && s.credentials.username == nickname);
+                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone(), s).await;
                     }
                     "locate_java" => {
                         if let Ok(java_path) = java_locator::locate_file("java.exe") {

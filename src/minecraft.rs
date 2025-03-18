@@ -60,7 +60,7 @@ pub mod versions {
             p
         }
 
-        pub fn to_pathbuf_file(&self) -> PathBuf {
+        pub fn to_pathbuf_file(&self, is_patched: bool) -> PathBuf {
             let mut p = PathBuf::new();
             let pkg = self.name.clone();
             let g = pkg.split(":").collect::<Vec<&str>>();
@@ -73,7 +73,11 @@ pub mod versions {
             }
             p.push(artifact_name);
             p.push(version);
-            p.push(vec![artifact_name, "-", version, ".jar"].concat());
+            if !is_patched {
+                p.push([artifact_name, "-", version, ".jar"].concat());
+            } else {
+                p.push([artifact_name, "-", version, "-patch.jar"].concat());
+            }
             p
         }
     }
@@ -188,7 +192,7 @@ pub mod session {
             surf::StatusCode::Conflict => Ok(SignUpResponse::UserAlreadyExists),
             surf::StatusCode::Ok => {
                 let response: ResponseUUID = serde_json::from_slice(&b).unwrap();
-                return Ok(SignUpResponse::Registered(response.uuid))
+                Ok(SignUpResponse::Registered(response.uuid))
             },
             _ => Ok(SignUpResponse::ServerError)
         }

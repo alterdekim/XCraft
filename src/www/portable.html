@@ -76,7 +76,7 @@
                   <li>
                     <a
                       href="#"
-                      onclick="showSection(this, 'accounts')"
+                      onclick="showSection(this, 'accounts'); showAccountsSection()"
                       class="menu-btn group relative flex justify-center rounded-sm px-2 py-1.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                     >
                       <i class="fa-solid fa-user-group"></i>
@@ -362,13 +362,6 @@
           </div>
 
           <div id="instances-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-            <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-              <img src="" class="w-12 h-12 rounded-full">
-              <div class="h-fill ms-2">
-                <h2 class="text-lg font-semibold">Release</h2>
-                <h2 class="text-sm font-semibold">1.12.2</h2>
-              </div>
-            </div>
           </div>
 
           <div id="screenshots-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill h-screen overflow-y-auto hidden">
@@ -403,6 +396,9 @@
       </div>
 
       <script type="text/javascript">
+
+          var chosenDomain = undefined;
+          var chosenNickname = undefined;
           
           function processParams(r) {
             let params = JSON.parse(r).params;
@@ -451,6 +447,10 @@
                 break;
               }
             }
+          }
+
+          function showAccountsSection() {
+            //$.post({url: "fetch_credentials_list" }, processParams);
           }
 
           function updateLogs(text) {
@@ -582,7 +582,7 @@
           function setServersList(params) {
               $(".server-instance").remove();
               for( let i = 0; i < params.length; i+=3) {
-                let instance = `<div class="server-instance bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+                let instance = `<div onclick="runServerConnection('`+params[i]+`', '`+params[i+1]+`')" class="server-instance bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
               <img src="`+params[i+2]+`" class="w-12 h-12 rounded-full">
               <div class="h-fill ms-2">
                 <h2 class="text-lg font-semibold">`+params[i]+`</h2>
@@ -591,6 +591,13 @@
             </div>`;
                 $("#servers-section").append(instance);
               }
+          }
+
+          function runServerConnection(domain, nickname) {
+            chosenDomain = domain;
+            chosenNickname = nickname;
+            showSection(undefined, "instances");
+            showInstancesSection();
           }
 
           function updateDownloads(params) {
@@ -616,7 +623,13 @@
 
           function runInstance(version) {
             $("#log-container").html("");
-            $.post({url: "run_instance", data: JSON.stringify({ params: [version] })}, processParams);
+            if( chosenDomain == undefined || chosenNickname == undefined ) {
+              $.post({url: "run_instance", data: JSON.stringify({ params: [version] })}, processParams);
+            } else {
+              $.post({url: "run_server_instance", data: JSON.stringify({ params: [version, chosenDomain, chosenNickname] })}, processParams);
+              chosenDomain = undefined;
+              chosenNickname = undefined;
+            }
             showSection(undefined, "logs");
           }
 
