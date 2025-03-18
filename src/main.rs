@@ -178,7 +178,7 @@ async fn main() {
                         let instance_name = params.unwrap().params[0].clone();
                         logs_rec.close();
                         (lx, logs_rec) = mpsc::unbounded_channel();
-                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone(), None).await;
+                        launcher.launch_instance(instance_name, lx.clone(), None).await;
                     }
                     "run_server_instance" => {
                         let params = params.unwrap().params;
@@ -188,7 +188,7 @@ async fn main() {
                         logs_rec.close();
                         (lx, logs_rec) = mpsc::unbounded_channel();
                         let s = launcher.config.servers().iter().find(|s| s.domain == domain && s.credentials.username == nickname);
-                        launcher.launch_instance(instance_name, launcher.config.user_name().to_string(), util::random_string(32), util::random_string(32), lx.clone(), s).await;
+                        launcher.launch_instance(instance_name, lx.clone(), s).await;
                     }
                     "locate_java" => {
                         if let Ok(java_path) = java_locator::locate_file("java.exe") {
@@ -204,7 +204,7 @@ async fn main() {
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), status.to_string(), msg.to_string()] }).unwrap()));
                     }
                     "fetch_settings" => {
-                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string(), launcher.config.enable_blur.to_string()] }).unwrap()));
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_settings_response".to_string(), launcher.config.show_alpha.to_string(), launcher.config.show_beta.to_string(), launcher.config.show_snapshots.to_string(), launcher.config.java_path.clone(), launcher.config.ram_amount.to_string(), launcher.config.enable_blur.to_string(), launcher.config.allow_http.to_string()] }).unwrap()));
                     }
                     "save_bg" => {
                         let params = &params.unwrap().params;
@@ -227,6 +227,7 @@ async fn main() {
                         launcher.config.show_beta = params[1].parse().unwrap();
                         launcher.config.show_snapshots = params[2].parse().unwrap();
                         launcher.config.enable_blur = params[5].parse().unwrap();
+                        launcher.config.allow_http = params[6].parse().unwrap();
                         launcher.save_config();
                     }
                     "open_file" => {

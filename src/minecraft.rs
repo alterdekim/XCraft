@@ -179,9 +179,9 @@ pub mod session {
         uuid: String
     }
 
-    pub async fn try_signup(server_domain: String, port: u16, username: String, password: String) -> Result<SignUpResponse, Box<dyn Error + Send + Sync>> {
+    pub async fn try_signup(server_domain: String, port: u16, username: String, password: String, allow_http: bool) -> Result<SignUpResponse, Box<dyn Error + Send + Sync>> {
         let request = SignUpRequest { username, password };
-        let mut r = surf::post(["http://".to_string(), server_domain, ":".to_string(), port.to_string(), "/api/register".to_string()].concat())
+        let mut r = surf::post([if allow_http { "http://".to_string() } else { "https://".to_string() }, server_domain, ":".to_string(), port.to_string(), "/api/register".to_string()].concat())
             .body_json(&request)
             .unwrap()
             .await?;

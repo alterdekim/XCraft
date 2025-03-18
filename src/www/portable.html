@@ -268,6 +268,13 @@
                       <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show snapshots</span>
                     </label>
                   </div>
+                  <div class="mt-4 flex justify-between items-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input id="allow-http" type="checkbox" value="" class="sr-only peer">
+                      <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                      <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Allow http (debug)</span>
+                    </label>
+                  </div>
               </div>
 
               <div id="appearance-settings" class="settings-tab mt-4 hidden">
@@ -509,7 +516,8 @@
             let java_path = $("#java-path").val();
             let ram_input = $("#ram-input").val();
             let enable_blur = $("#enable-blur").prop('checked');
-            $.post({url: "update_settings", data: JSON.stringify({ params: [show_alpha+"", show_beta+"", show_snapshots+"", java_path, ram_input+"", enable_blur+""] }) }, processParams);
+            let allow_http = $("#allow-http").prop('checked');
+            $.post({url: "update_settings", data: JSON.stringify({ params: [show_alpha+"", show_beta+"", show_snapshots+"", java_path, ram_input+"", enable_blur+"", allow_http+""] }) }, processParams);
             showPopup("Saved!");
           }
 
@@ -519,7 +527,8 @@
               $("#show-snapshots").prop('checked', (params[2] === 'true'));
               $("#java-path").val(params[3]);
               $("#ram-input").val(params[4]);
-              $("#enable-blur").prop('checked', (params[5] == 'true'));
+              $("#enable-blur").prop('checked', (params[5] === 'true'));
+              $("#allow-http").prop('checked', (params[6] === 'true'));
               if( params[5] == 'true' ) {
                 enableBlur();
               }
@@ -594,9 +603,9 @@
           }
 
           function runServerConnection(domain, nickname) {
+            showSection(undefined, "instances");
             chosenDomain = domain;
             chosenNickname = nickname;
-            showSection(undefined, "instances");
             showInstancesSection();
           }
 
@@ -669,7 +678,8 @@
           }
 
           function showSection(obj, section) {
-
+              chosenDomain = undefined;
+              chosenNickname = undefined;
               $(".menu-btn").each(function(i, d) {
                 $(d).removeClass('bg-green-50');
                 $(d).addClass('text-gray-500');

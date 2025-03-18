@@ -97,7 +97,7 @@ impl Launcher {
 
         println!("Server information: {}:{} session={}", domain, server_port, session_server_port);
 
-        match minecraft::session::try_signup(domain.clone(), session_server_port, username.clone(), password.clone()).await {
+        match minecraft::session::try_signup(domain.clone(), session_server_port, username.clone(), password.clone(), self.config.allow_http).await {
             Ok(status) => match status {
                 SignUpResponse::ServerError => (false, "Internal server error"),
                 SignUpResponse::BadCredentials => (false, "Username or password is not valid"),
@@ -170,9 +170,14 @@ impl Launcher {
         v
     }
 
-    pub async fn launch_instance(&self, instance_name: String, mut username: String, mut uuid: String, mut token: String, sender: UnboundedSender<String>, special_server: Option<&LauncherServer> ) {
+    pub async fn launch_instance(&self, instance_name: String, sender: UnboundedSender<String>, special_server: Option<&LauncherServer> ) {
+
+        let mut username = self.config.user_name();
+        let mut uuid = util::random_string(32);
+        let mut token = util::random_string(32);
+
         if let Some(server) = special_server {
-            username = server.credentials.username.clone();
+            username = &server.credentials.username;
             uuid = server.credentials.uuid.clone();
             token = server.credentials.password.clone();
         }
@@ -237,7 +242,7 @@ impl Launcher {
                             let mut patched_auth = self.config.launcher_dir();
                             patched_auth.push("libraries");
                             patched_auth.push(library.to_pathbuf_file(true));
-                            let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), &["http://", &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat());
+                            let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), &[if self.config.allow_http { "http://" } else { "https://" }, &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat());
                             libraries_cmd.push([patched_auth.to_str().unwrap(), ";"].concat());
                             println!("{:?}", patched_auth.to_str().unwrap());
                             continue;
@@ -258,7 +263,7 @@ impl Launcher {
 
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
-            cmd.args(["--username", &username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            cmd.args(["--username", username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
             if let Some(server) = special_server {
                 cmd.arg("--server");
                 cmd.arg(&server.domain);
