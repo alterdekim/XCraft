@@ -20,7 +20,7 @@ You can download the latest stable build of XCraft from our Jenkins CI server:
 
 ```sh
 # Clone the repository
-git clone https://github.com/yourusername/XCraft.git
+git clone https://gitea.awain.net/alterwain/XCraft.git
 cd XCraft
 
 # Build the launcher
