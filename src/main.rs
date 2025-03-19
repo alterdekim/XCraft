@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use launcher::Launcher;
+use rfd::FileDialog;
 use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tokio::runtime::Runtime;
@@ -146,6 +147,55 @@ async fn main() {
                             v.push(img);
                         }
 
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
+                    }
+                    "upload_skin" => {
+                        let params = params.unwrap().params;
+                        if let Some(server) = launcher.find_credentials(&params[0], &params[1]) {
+                            if let Some(skin_path) = FileDialog::new().add_filter("Images", &["png"]).pick_file() {
+                                
+                                let msg = launcher.upload_skin(skin_path, &server.credentials.uuid, &server.credentials.password, &[if launcher.config.allow_http {"http"} else {"https"}, "://", &server.domain, ":", &server.session_server_port.to_string(), "/api/upload"].concat()).await;
+                                if let Ok(msg) = msg {
+                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), msg] }).unwrap()));
+                                } else {
+                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), "Error uploading new skin".to_string()] }).unwrap()));
+                                }
+                            }
+                        }
+                    }
+                    "upload_cape" => {
+                        let params = params.unwrap().params;
+                        if let Some(server) = launcher.find_credentials(&params[0], &params[1]) {
+                            if let Some(skin_path) = FileDialog::new().add_filter("Images", &["png"]).pick_file() {
+                                
+                                let msg = launcher.upload_cape(skin_path, &server.credentials.uuid, &server.credentials.password, &[if launcher.config.allow_http {"http"} else {"https"}, "://", &server.domain, ":", &server.session_server_port.to_string(), "/api/upload_cape"].concat()).await;
+                                if let Ok(msg) = msg {
+                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), msg] }).unwrap()));
+                                } else {
+                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), "Error uploading new cape".to_string()] }).unwrap()));
+                                }
+                            }
+                        }
+                    }
+                    "set_skin_model" => {
+                        let params = params.unwrap().params;
+                        if let Some(server) = launcher.find_credentials(&params[0], &params[1]) {
+                            let msg = launcher.set_skin_model(params[2].parse().unwrap(), &server.credentials.uuid, &server.credentials.password, &[if launcher.config.allow_http {"http"} else {"https"}, "://", &server.domain, ":", &server.session_server_port.to_string(), "/api/set_model"].concat()).await;
+                            if let Ok(msg) = msg {
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), msg] }).unwrap()));
+                            } else {
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), "Error setting skin model".to_string()] }).unwrap()));
+                            }
+                        }
+                    }
+                    "fetch_credentials_list" => {
+                        let resp = launcher.get_servers_list().await;
+                        let mut v: Vec<String> = Vec::new();
+                        v.push("fetch_credentials_list".to_string());
+                        for (domain, nickname, _image) in resp {
+                            v.push(domain);
+                            v.push(nickname);
+                        }
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
                     }
                     "fetch_servers_list" => {

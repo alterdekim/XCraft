@@ -15,9 +15,9 @@
       <div id="sidebar" class="flex h-screen bg-white w-16 flex-col justify-between border-e border-gray-100 hidden">
           <div>
             <div class="inline-flex size-16 items-center justify-center">
-              <a href="#" onclick="showSection(this, 'appearance')">
-                <span class="grid size-10 place-content-center rounded-lg bg-[url(https://www.mc-heads.net/avatar/notch)] text-xs text-gray-600">
-                  N
+              <a href="#" onclick="showAppearance(this)">
+                <span class="grid size-10 place-content-center rounded-lg bg-green-500 text-xs text-white">
+                  Me
                 </span>
               </a>
             </div>
@@ -321,51 +321,43 @@
             <h2 class="text-2xl font-semibold text-gray-700">Account Settings</h2>
             
             <div class="mt-6 text-left">
-              <label class="text-gray-600 font-medium">Offline username</label>
-              <input type="text" placeholder="Username" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <span class="text-gray-600 font-medium">Username:</span>
+              <span id="account-name" class="text-gray-600 font-medium"></span>
           </div>
 
             <!-- Skin Upload -->
             <div class="mt-6 text-left">
                 <label class="text-gray-600 font-medium">Minecraft Skin</label>
                 <div class="mt-2 flex items-center gap-4">
-                    <img id="skin-preview" src="https://www.mc-heads.net/avatar/notch" class="w-16 h-16 rounded-md border" alt="Skin Preview">
-                    <input id="skin-upload" type="file" accept=".png" class="hidden" onchange="previewSkin()">
-                    <button onclick="document.getElementById('skin-upload').click()" 
+                    <button onclick="uploadSkin()" 
                         class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
                         Upload
                     </button>
                 </div>
+            </div>
+
+            <div class="mt-6 text-left">
+              <label class="inline-flex items-center cursor-pointer">
+                <input id="slim-skin" type="checkbox" value="" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Slim skin</span>
+              </label>
             </div>
     
             <!-- Cape Upload -->
             <div class="mt-6 text-left">
                 <label class="text-gray-600 font-medium">Minecraft Cape</label>
                 <div class="mt-2 flex items-center gap-4">
-                    <img id="cape-preview" src="https://skinmc.net/capes/77863/download" class="w-16 h-16 rounded-md border" alt="Cape Preview">
-                    <input id="cape-upload" type="file" accept=".png" class="hidden" onchange="previewCape()">
-                    <button onclick="document.getElementById('cape-upload').click()" 
+                    <button onclick="uploadCape()" 
                         class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
                         Upload
                     </button>
                 </div>
             </div>
-    
-            <!-- Save Button -->
-            <button
-                class="mt-6 w-full bg-green-500 hover:bg-green-700 text-white py-2 rounded font-bold transition">
-                Save Settings
-            </button>
           </div>
 
           <div id="accounts-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
-            <div class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-              <img src="https://www.mc-heads.net/avatar/MHF_Steve" class="w-12 h-12 rounded-full">
-              <div class="h-fill ms-2">
-                <h2 class="text-lg font-semibold">DartJevder</h2>
-                <h2 class="text-sm font-semibold">Blatnoe Pivo</h2>
-              </div>
-            </div>
+            
           </div>
 
           <div id="instances-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
@@ -452,12 +444,15 @@
               } else if( params[i] == "update_logs" ) {
                 updateLogs(params[i+1]);
                 break;
+              } else if( params[i] == "fetch_credentials_list" ) {
+                setCredentialsList(params.slice(i+1));
+                break;
               }
             }
           }
 
           function showAccountsSection() {
-            //$.post({url: "fetch_credentials_list" }, processParams);
+            $.post({url: "fetch_credentials_list" }, processParams);
           }
 
           function updateLogs(text) {
@@ -588,6 +583,45 @@
             }
           }
 
+          var accountNick = undefined;
+          var accountDomain = undefined;
+
+          function setAccount(nickname, domain) {
+            accountNick = nickname;
+            accountDomain = domain;
+          }
+
+          function showAppearance(obj) {
+              if( accountNick != undefined && accountDomain != undefined ) {
+                $("#account-name").html(accountNick);
+                showSection(obj, 'appearance');
+              }
+          }
+
+          function uploadSkin() {
+            $.post({ url: "upload_skin", data: JSON.stringify({ params: [accountNick, accountDomain] }) }, processParams);
+          }
+
+          function uploadCape() {
+            $.post({ url: "upload_cape", data: JSON.stringify({ params: [accountNick, accountDomain] }) }, processParams);
+          }
+
+          function setCredentialsList(params) {
+              $("#accounts-section").html("");
+              for( let i = 0; i < params.length; i += 2 ) {
+                if( i == 0 && params.length >= 2 ) {
+                  setAccount(params[i+1], params[i]);
+                }
+                let instance = `<div onclick="setAccount('`+params[i+1]+`', '`+params[i]+`')" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+                  <div class="h-fill ms-2">
+                    <h2 class="text-lg font-semibold">`+params[i+1]+`</h2>
+                    <h2 class="text-sm font-semibold">`+params[i]+`</h2>
+                  </div>
+                </div>`;
+                $("#accounts-section").append(instance);
+              }
+          }
+
           function setServersList(params) {
               $(".server-instance").remove();
               for( let i = 0; i < params.length; i+=3) {
@@ -698,6 +732,12 @@
             $.get("check_installation", processParams);
             $.get("fetch_settings", processParams);
             $.get("fetch_bg", processParams);
+            showAccountsSection();
+
+            $('#slim-skin').on('change', function () {
+                $.post({ url: "set_skin_model", data: JSON.stringify({ params: [accountNick, accountDomain, $(this).is(':checked')+""] }) }, processParams);
+            });
+
             setInterval(function() {
                 if( !$("#loading-section").hasClass("hidden") ) {
                   $.get("check_download_status", processParams);

@@ -1,9 +1,11 @@
 use core::str;
+use std::error::Error;
 use std::io::Cursor;
+use std::path::PathBuf;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
@@ -12,6 +14,7 @@ use crate::minecraft;
 use crate::minecraft::session::SignUpResponse;
 use crate::minecraft::versions::Version;
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
+use ureq_multipart::MultipartBuilder;
 
 const JAVA_ARGS: [&str; 22] = ["-Xms512M", 
 "-XX:+UnlockExperimentalVMOptions", 
@@ -61,6 +64,46 @@ impl Launcher {
         self.load_config();
         self.config.set_username(user_name);
         self.save_config();
+    }
+
+    pub async fn upload_skin(&self, file_path: PathBuf, uuid: &str, password: &str, server_url: &str) -> Result<String, Box<dyn Error + Sync + Send>> {
+        let (content_type,data) = MultipartBuilder::new()
+            .add_file("skin",file_path)?
+            .finish()?;
+
+        let mut resp = ureq::post(server_url)
+                    .content_type(content_type)
+                    .query_pairs(vec![("uuid", uuid), ("password", password)])
+                    .send(data)?;
+
+        let s = resp.body_mut().read_to_string()?;
+
+        Ok(s)
+    }
+
+    pub async fn upload_cape(&self, file_path: PathBuf, uuid: &str, password: &str, server_url: &str) -> Result<String, Box<dyn Error + Sync + Send>> {
+        let (content_type,data) = MultipartBuilder::new()
+            .add_file("cape",file_path)?
+            .finish()?;
+
+        let mut resp = ureq::post(server_url)
+                    .content_type(content_type)
+                    .query_pairs(vec![("uuid", uuid), ("password", password)])
+                    .send(data)?;
+
+        let s = resp.body_mut().read_to_string()?;
+
+        Ok(s)
+    }
+
+    pub async fn set_skin_model(&self, is_slim: bool, uuid: &str, password: &str, server_url: &str) -> Result<String, Box<dyn Error + Sync + Send>> {
+        let mut resp = ureq::post(server_url)
+                    .query_pairs(vec![("uuid", uuid), ("password", password), ("model", &is_slim.to_string())])
+                    .send_empty()?;
+
+        let s = resp.body_mut().read_to_string()?;
+
+        Ok(s)
     }
 
     fn save_server_info(&mut self, uuid: String, username: String, password: String, domain: String, session_server_port: u16, server_port: u16) -> (bool, &str) {
@@ -115,6 +158,11 @@ impl Launcher {
             v.push((server.domain.clone(), server.credentials.username.clone(), minecraft::server::get_server_icon(&server.domain, server.port).await.unwrap_or(None)));
         }
         v
+    }
+
+    pub fn find_credentials(&self, username: &str, domain: &str) -> Option<&LauncherServer> {
+        let servers = self.config.servers();
+        servers.iter().find(|&server| server.domain == domain && server.credentials.username == username)
     }
 
     pub fn get_instances_list(&self) -> Vec<(String, String, String)> {
@@ -242,9 +290,8 @@ impl Launcher {
                             let mut patched_auth = self.config.launcher_dir();
                             patched_auth.push("libraries");
                             patched_auth.push(library.to_pathbuf_file(true));
-                            let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), &[if self.config.allow_http { "http://" } else { "https://" }, &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat());
+                            let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), [b"https://sessionserver.mojang.com/session/minecraft/".as_slice(), b".minecraft.net".as_slice()].as_slice(),  &[&[if self.config.allow_http { "http://" } else { "https://" }, &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat(), &server.domain]);
                             libraries_cmd.push([patched_auth.to_str().unwrap(), ";"].concat());
-                            println!("{:?}", patched_auth.to_str().unwrap());
                             continue;
                         }
                     }
@@ -253,7 +300,6 @@ impl Launcher {
             }
             libraries_cmd.push(client_jar.to_str().unwrap().to_string());
             cmd.arg(libraries_cmd.concat());
-            println!("{:?}", libraries_cmd);
             cmd.arg(config.mainClass.clone());
 
             let mut game_dir = self.config.launcher_dir();
@@ -264,6 +310,8 @@ impl Launcher {
             let mut assets_dir = self.config.launcher_dir();
             assets_dir.push("assets");
             cmd.args(["--username", username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            assets_dir.push("skins");
+            let _ = std::fs::remove_dir_all(assets_dir);
             if let Some(server) = special_server {
                 cmd.arg("--server");
                 cmd.arg(&server.domain);
