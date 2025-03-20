@@ -27,17 +27,18 @@ pub mod versions {
         pub snapshot: String 
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct VersionConfig {
-        pub assetIndex: ConfigAssetIndex,
+        pub assetIndex: Option<ConfigAssetIndex>,
         pub mainClass: String,
-        pub downloads: ConfigDownloads,
+        pub minecraftArguments: String,
+        pub downloads: Option<ConfigDownloads>,
         pub id: String,
         pub r#type: String,
         pub libraries: Vec<VersionLibrary>
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct VersionLibrary {
         pub downloads: LibraryDownloads,
         pub name: String,
@@ -82,13 +83,13 @@ pub mod versions {
         }
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct LibraryClassifiers {
         #[serde(rename = "natives-windows")]
         pub natives: Option<LibraryNatives>
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct LibraryNatives {
         pub path: String,
         pub sha1: String,
@@ -96,13 +97,13 @@ pub mod versions {
         pub url: String
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct LibraryDownloads {
         pub artifact: Option<LibraryArtifact>,
         pub classifiers: Option<LibraryClassifiers>
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct LibraryArtifact {
         pub path: String,
         pub sha1: String, 
@@ -110,19 +111,19 @@ pub mod versions {
         pub url: String
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct ConfigDownloads {
         pub client: ConfigDownloadsClient
     }
     
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct ConfigDownloadsClient {
         pub sha1: String,
         pub size: u64,
         pub url: String
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct ConfigAssetIndex {
         pub id: String,
         pub sha1: String,
@@ -153,6 +154,14 @@ pub mod versions {
         let resp = r.body_bytes().await.unwrap();
         let resp: VersionConfig = serde_json::from_slice(&resp)?;
         Ok(resp)
+    }
+
+    pub async fn find_version_object(version: &str) -> Result<VersionConfig, Box<dyn Error + Send + Sync>> {
+        let versions = fetch_versions_list().await?;
+        let versions = versions.versions;
+        let version = versions.iter().find(|v| v.id == version).unwrap();
+        let config = fetch_version_object(version).await?;
+        Ok(config)
     }
 }
 
@@ -196,6 +205,22 @@ pub mod session {
             },
             _ => Ok(SignUpResponse::ServerError)
         }
+    }
+}
+
+pub mod multimc {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Pack {
+        pub components: Vec<Component>
+    }
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Component {
+        pub cachedName: Option<String>,
+        pub version: String,
+        pub uid: String,
     }
 }
 

@@ -5,12 +5,13 @@ use std::path::PathBuf;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use tokio::fs::File;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use crate::config::{LauncherCredentials, LauncherServer};
 use crate::minecraft;
+use crate::minecraft::multimc::Pack;
 use crate::minecraft::session::SignUpResponse;
 use crate::minecraft::versions::Version;
 use crate::{config::LauncherConfig, minecraft::versions::VersionConfig, util};
@@ -167,8 +168,7 @@ impl Launcher {
 
     pub fn get_instances_list(&self) -> Vec<(String, String, String)> {
         let mut v = Vec::new();
-        let mut instances = self.config.launcher_dir();
-        instances.push("instances");
+        let instances = self.config.instances_path();
         if let Ok(entries) = std::fs::read_dir(instances) {
             for entry in entries {
                 if entry.is_err() { continue; }
@@ -180,7 +180,7 @@ impl Launcher {
                     let config: VersionConfig = serde_json::from_slice(&data).unwrap();
                     let c_type = config.r#type;
                     let c_type = c_type.as_str();
-                    v.push((config.id, c_type.to_string(),  format!("data:image/png;base64,{}", BASE64_STANDARD.encode(match c_type {
+                    v.push((entry.file_name().into_string().unwrap(), c_type.to_string(),  format!("data:image/png;base64,{}", BASE64_STANDARD.encode(match c_type {
                         "old_alpha" => include_bytes!("www/icons/alpha.png").to_vec(),
                         "old_beta" => include_bytes!("www/icons/beta.png").to_vec(),
                         "release" | "snapshot" => include_bytes!("www/icons/release.png").to_vec(),
@@ -194,8 +194,7 @@ impl Launcher {
 
     pub fn get_screenshots(&self) -> Vec<(String, String)> {
         let mut v = Vec::new();
-        let mut instances = self.config.launcher_dir();
-        instances.push("instances");
+        let instances = self.config.instances_path();
         if let Ok(entries) = std::fs::read_dir(instances) {
             for entry in entries {
                 if entry.is_err() { continue; }
@@ -230,18 +229,15 @@ impl Launcher {
             token = server.credentials.password.clone();
         }
         
-        let mut instances = self.config.launcher_dir();
-        instances.push("instances");
+        let mut instances = self.config.instances_path();
         instances.push(&instance_name);
         instances.push("client.json");
 
-        let mut client_jar = self.config.launcher_dir();
-        client_jar.push("instances");
+        let mut client_jar = self.config.instances_path();
         client_jar.push(&instance_name);
         client_jar.push("client.jar");
 
-        let mut instance_dir = self.config.launcher_dir();
-        instance_dir.push("instances");
+        let mut instance_dir = self.config.instances_path();
         instance_dir.push(&instance_name);
         instance_dir.push("data");
         let _ = std::fs::create_dir_all(&instance_dir);
@@ -258,8 +254,7 @@ impl Launcher {
         
         cmd.arg(["-Xmx", &self.config.ram_amount.to_string(), "M"].concat());
 
-        let mut natives_path = self.config.launcher_dir();
-        natives_path.push("instances");
+        let mut natives_path = self.config.instances_path();
         natives_path.push(&instance_name);
         natives_path.push("natives");
 
@@ -267,28 +262,28 @@ impl Launcher {
         cmd.arg(["-Dminecraft.client.jar=", client_jar.to_str().unwrap()].concat());
         cmd.arg("-cp");
 
+        let mut minecraft_arguments = None;
+
         if let Ok(data) = std::fs::read(&instances) {
             let config: VersionConfig = serde_json::from_slice(&data).unwrap();
+            minecraft_arguments = Some(config.minecraftArguments);
             let mut libraries_cmd = Vec::new();
             for library in config.libraries {
                 if let Some(classifier) = &library.downloads.classifiers {
                     if let Some(natives) = &classifier.natives {
                         let rel_path = &natives.path;
-                        let mut libs = self.config.launcher_dir();
-                        libs.push("libraries");
+                        let libs = self.config.libraries_path();
                         let rel_path = [libs.to_str().unwrap(), "\\", &rel_path.replace("/", "\\")].concat();
                         let data = std::fs::read(rel_path).unwrap();
 
                         let _ = zip_extract::extract(Cursor::new(data), &natives_path, true);
                     }
                 } else {
-                    let mut libs = self.config.launcher_dir();
-                    libs.push("libraries");
+                    let mut libs = self.config.libraries_path();
                     libs.push(library.to_pathbuf_file(false));
                     if library.name.contains("com.mojang:authlib") {
                         if let Some(server) = special_server {
-                            let mut patched_auth = self.config.launcher_dir();
-                            patched_auth.push("libraries");
+                            let mut patched_auth = self.config.libraries_path();
                             patched_auth.push(library.to_pathbuf_file(true));
                             let _ = nicotine::patch_jar(libs.to_str().unwrap(), patched_auth.to_str().unwrap(), [b"https://sessionserver.mojang.com/session/minecraft/".as_slice(), b".minecraft.net".as_slice()].as_slice(),  &[&[if self.config.allow_http { "http://" } else { "https://" }, &server.domain, ":", &server.session_server_port.to_string(), "/api/"].concat(), &server.domain]);
                             libraries_cmd.push([patched_auth.to_str().unwrap(), ";"].concat());
@@ -302,14 +297,31 @@ impl Launcher {
             cmd.arg(libraries_cmd.concat());
             cmd.arg(config.mainClass.clone());
 
-            let mut game_dir = self.config.launcher_dir();
-            game_dir.push("instances");
+            let mut game_dir = self.config.instances_path();
             game_dir.push(&instance_name);
             game_dir.push("data");
 
-            let mut assets_dir = self.config.launcher_dir();
-            assets_dir.push("assets");
-            cmd.args(["--username", username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
+            let mut assets_dir = self.config.assets_path();
+
+            let minecraft_arguments = minecraft_arguments.unwrap();
+            let minecraft_arguments = minecraft_arguments.split(" ");
+            for minecraft_argument in minecraft_arguments {
+                cmd.arg(match minecraft_argument {
+                    "${auth_player_name}" => username,
+                    "${version_name}" => &instance_name,
+                    "${game_directory}" => game_dir.to_str().unwrap(),
+                    "${assets_root}" => assets_dir.to_str().unwrap(),
+                    "${assets_index_name}" => &config.assetIndex.as_ref().unwrap().id,
+                    "${auth_uuid}" => &uuid,
+                    "${auth_access_token}" => &token,
+                    "${user_properties}" => "{}",
+                    "${user_type}" => "mojang",
+                    "${version_type}" => "modified",
+                    _ => minecraft_argument
+                });
+            }
+
+            //cmd.args(["--username", username, "--version", &instance_name, "--gameDir", game_dir.to_str().unwrap(), "--assetsDir", assets_dir.to_str().unwrap(), "--assetIndex", &config.assetIndex.id, "--uuid", &uuid, "--accessToken", &token, "--userProperties", "{}", "--userType", "mojang", "--width", "925", "--height", "530"]);
             assets_dir.push("skins");
             let _ = std::fs::remove_dir_all(assets_dir);
             if let Some(server) = special_server {
@@ -318,6 +330,7 @@ impl Launcher {
                 cmd.arg("--port");
                 cmd.arg(server.port.to_string());
             }
+            
             let mut child = cmd.spawn().unwrap();
 
             tokio::spawn(async move {
@@ -349,37 +362,272 @@ impl Launcher {
     }
 
 
+    pub async fn import_multimc(&self, instance_path: PathBuf, sender: UnboundedSender<(u8, String)>) -> Result<(), Box<dyn Error + Send + Sync>> {
+        let (sx, mut rx) = mpsc::unbounded_channel();
+
+
+        let instance_name = instance_path.file_name().unwrap().to_str().unwrap();
+        let instance_name = [&instance_name[..instance_name.len()-4], "_", &util::random_string(4)].concat();
+        let mut instance_dir = self.config.instances_path();
+        instance_dir.push(&instance_name);
+        let _ = std::fs::create_dir_all(&instance_dir);
+        let data = std::fs::read(instance_path)?;
+        zip_extract::extract(Cursor::new(data), &instance_dir, true)?;
+        let mut multimc_data = instance_dir.clone();
+        multimc_data.push(".minecraft");
+        let mut data_dir = instance_dir.clone();
+        data_dir.push("data");
+        std::fs::rename(multimc_data, data_dir)?;
+
+        let mut pack_path = instance_dir.clone();
+        pack_path.push("mmc-pack.json");
+        println!("pack_path {}", pack_path.to_str().unwrap());
+        let multimc_data = std::fs::read(pack_path)?;
+        let pack_mmc: Pack = serde_json::from_slice(&multimc_data)?;
+
+        let mut minecraft_config = None;
+        let mut forge_version = None;
+
+        for component in pack_mmc.components.iter().filter(|c| c.cachedName.is_some()) {
+            match component.cachedName.as_ref().unwrap().as_str() {
+                "Minecraft" => minecraft_config = Some(crate::minecraft::versions::find_version_object(&component.version).await?),
+                "Forge" => {
+                    forge_version = Some(component.version.clone());
+                }
+                _ => {}
+            }
+        }
+
+        let mut overall_size = 0;
+        let mut cnt = 0;
+
+        let mut client_json_path = self.config.instances_path();
+        client_json_path.push(&instance_name);
+        client_json_path.push("client.json");
+
+        if minecraft_config.is_some() {
+            let config = minecraft_config.clone().unwrap();
+            let config_cl = config.clone();
+            
+            overall_size = config.downloads.as_ref().unwrap().client.size as usize;
+            cnt = 0;
+
+            let client_jar_url = config.downloads.as_ref().unwrap().client.url.clone();
+
+            let mut client_jar_path = self.config.instances_path();
+            client_jar_path.push(&instance_name);
+            client_jar_path.push("client.jar");
+
+            std::fs::write(&client_json_path, serde_json::to_string_pretty(&config_cl).unwrap())?;
+
+            let _ = util::download_file(&client_jar_url, client_jar_path.to_str().unwrap(), sx.clone(), "Downloading client.jar", false).await;
+            cnt += 1;
+
+            let libraries = self.config.libraries_path();
+
+            for i in 0..config.libraries.len() {
+                let library = &config.libraries[i];
+                if let Some(artifact) = &library.downloads.artifact {
+                    let mut dl_path = libraries.clone();
+                    let mut dl_pp = libraries.clone();
+                    dl_pp.push(library.to_pathbuf_path());
+                    let _ = std::fs::create_dir_all(dl_pp);
+                    dl_path.push(library.to_pathbuf_file(false));
+                    if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                        overall_size += artifact.size as usize;
+                        let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries", false).await;
+                        cnt += 1;
+                    }
+                }
+
+                if let Some(classifiers) = &library.downloads.classifiers {
+                    if let Some(natives) = &classifiers.natives {
+                        let mut dl_path = libraries.clone();
+                        dl_path.push(&natives.path);
+                        let t_p = dl_path.to_str().unwrap().split("/").collect::<Vec<&str>>();
+                        let t_p = t_p[..t_p.len()-1].join("/");
+                        let _ = std::fs::create_dir_all(&t_p);
+                        if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                            overall_size += natives.size as usize;
+                            let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives", false).await;
+                            cnt += 1;
+                        }
+                    }
+                }
+            }
+
+            let assets_path = self.config.assets_path();
+
+            let mut indexes = assets_path.clone();
+            indexes.push("indexes");
+            let _ = std::fs::create_dir_all(indexes);
+
+            let mut objects = assets_path.clone();
+            objects.push("objects");
+            let _ = std::fs::create_dir_all(objects);
+
+            let mut index = assets_path.clone();
+            index.push(config.assetIndex.as_ref().unwrap().to_path());
+
+            let _ = util::download_file(&config.assetIndex.as_ref().unwrap().url, index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
+            cnt += 1;
+
+            let asset_index = config.assetIndex.as_ref().unwrap().url.clone();
+
+            overall_size += config.assetIndex.as_ref().unwrap().size as usize;
+            overall_size += config.assetIndex.as_ref().unwrap().totalSize as usize;
+
+            let assets = crate::minecraft::assets::fetch_assets_list(&asset_index).await.unwrap().objects;
+
+            for (_key, asset) in assets {
+                let mut single_object = assets_path.clone();
+                single_object.push(asset.to_path());
+
+                let mut single_object_path = assets_path.clone();
+                single_object_path.push(asset.to_small_path());
+                let _ = std::fs::create_dir_all(single_object_path);
+
+                if File::open(single_object.to_str().unwrap()).await.is_err() {
+                    let _ = util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects", false).await;
+                    cnt += 1;
+                }
+            }
+        }
+
+        if minecraft_config.is_some() && forge_version.is_some() {
+            let mut forge_installer_path = self.config.libraries_path();
+            forge_installer_path.push("forge_installer.jar");
+
+            let mut forge_installer_unpack = self.config.libraries_path();
+            forge_installer_unpack.push("installer_unpacked");
+
+            std::fs::create_dir_all(&forge_installer_unpack)?;
+
+            let forge_installer_url = format!("https://maven.minecraftforge.net/net/minecraftforge/forge/{}-{}/forge-{}-{}-installer.jar", minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap(), minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap());
+
+            let _ = util::download_file(&forge_installer_url, forge_installer_path.to_str().unwrap(), sx.clone(), "Downloading forge installer", true).await;
+            cnt += 1;
+
+            let forge_installer_data = std::fs::read(&forge_installer_path)?;
+
+            zip_extract::extract(Cursor::new(forge_installer_data), &forge_installer_unpack, true)?;
+
+            let mut forge_library_path = self.config.libraries_path();
+            forge_library_path.push("net");
+            forge_library_path.push("minecraftforge");
+            forge_library_path.push("forge");
+            forge_library_path.push(format!("{}-{}", minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap()));
+
+            let mut forge_version_json = forge_installer_unpack.clone();
+            forge_version_json.push("version.json");
+
+            let mut forge_installer_library = forge_installer_unpack.clone();
+            forge_installer_library.push("maven");
+            forge_installer_library.push("net");
+            forge_installer_library.push("minecraftforge");
+            forge_installer_library.push("forge");
+            forge_installer_library.push(format!("{}-{}", minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap()));
+            forge_installer_library.push(format!("forge-{}-{}.jar", minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap()));
+
+            std::fs::create_dir_all(&forge_library_path)?;
+
+            forge_library_path.push(format!("forge-{}-{}.jar", minecraft_config.as_ref().unwrap().id, forge_version.as_ref().unwrap()));
+
+            std::fs::copy(&forge_installer_library, &forge_library_path)?;
+
+            let version_json = std::fs::read(&forge_version_json)?;
+            let version_json: VersionConfig = serde_json::from_slice(&version_json)?;
+
+            let mut edited = minecraft_config.clone().unwrap();
+            edited.mainClass = version_json.mainClass.clone();
+            edited.minecraftArguments = version_json.minecraftArguments;
+            edited.libraries.retain(|l| !version_json.libraries.iter().any(|t| t.name == l.name));
+            for i in 0..version_json.libraries.len() {
+                edited.libraries.push(version_json.libraries[i].clone());
+            }
+
+            std::fs::write(&client_json_path, serde_json::to_string_pretty(&edited).unwrap())?;
+
+            std::fs::remove_dir_all(forge_installer_unpack)?;
+            std::fs::remove_file(forge_installer_path)?;
+
+            let libraries = self.config.libraries_path();
+
+            for i in 0..edited.libraries.len() {
+                let library = &edited.libraries[i];
+                if let Some(artifact) = &library.downloads.artifact {
+                    let mut dl_path = libraries.clone();
+                    let mut dl_pp = libraries.clone();
+                    dl_pp.push(library.to_pathbuf_path());
+                    let _ = std::fs::create_dir_all(dl_pp);
+                    dl_path.push(library.to_pathbuf_file(false));
+                    if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                        overall_size += artifact.size as usize;
+                        let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries", false).await;
+                        cnt += 1;
+                    }
+                }
+
+                if let Some(classifiers) = &library.downloads.classifiers {
+                    if let Some(natives) = &classifiers.natives {
+                        let mut dl_path = libraries.clone();
+                        dl_path.push(&natives.path);
+                        let t_p = dl_path.to_str().unwrap().split("/").collect::<Vec<&str>>();
+                        let t_p = t_p[..t_p.len()-1].join("/");
+                        let _ = std::fs::create_dir_all(&t_p);
+                        if File::open(dl_path.to_str().unwrap()).await.is_err() {
+                            overall_size += natives.size as usize;
+                            let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives", false).await;
+                            cnt += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        tokio::spawn(async move {
+            let mut current_size = 0;
+            let mut current_cnt = 0;
+            while let Some((size, status)) = rx.recv().await {
+                current_size += size;
+                current_cnt += 1;
+                let _ = sender.send((((current_size as f32 / overall_size as f32) * 100.0) as u8, status));
+                if current_cnt >= cnt {
+                    let _ = sender.send((100, "_".to_string()));
+                }
+            }
+        });
+
+        Ok(())
+    }
+
     pub async fn new_vanilla_instance(&mut self, config: VersionConfig, version_object: &Version, sender: UnboundedSender<(u8, String)>) {
         
         let (sx, mut rx) = mpsc::unbounded_channel();
         
-        let root = self.config.launcher_dir();
-        let mut instances = root.clone();
-        instances.push("instances");
+        let mut instances = self.config.instances_path();
         instances.push(&config.id);
 
         let _ = std::fs::create_dir_all(&instances);
 
         instances.push("client.jar");
 
-        let mut overall_size = config.downloads.client.size as usize;
+        let mut overall_size = config.downloads.as_ref().unwrap().client.size as usize;
         let mut cnt = 0;
 
-        let client_jar_url = config.downloads.client.url;
+        let client_jar_url = config.downloads.as_ref().unwrap().client.url.clone();
 
-        let mut client_json_path = root.clone();
-        client_json_path.push("instances");
+        let mut client_json_path = self.config.instances_path();
         client_json_path.push(config.id);
         client_json_path.push("client.json");
 
-        let _ = util::download_file(&version_object.url, client_json_path.to_str().unwrap(), sx.clone(), "Downloading client.json");
+        let _ = util::download_file(&version_object.url, client_json_path.to_str().unwrap(), sx.clone(), "Downloading client.json", false).await;
         cnt += 1;
 
-        let _ = util::download_file(&client_jar_url, instances.to_str().unwrap(), sx.clone(), "Downloading client.jar");
+        let _ = util::download_file(&client_jar_url, instances.to_str().unwrap(), sx.clone(), "Downloading client.jar", false).await;
         cnt += 1;
 
-        let mut libraries = root.clone();
-        libraries.push("libraries");
+        let libraries = self.config.libraries_path();
 
         for i in 0..config.libraries.len() {
             let library = &config.libraries[i];
@@ -391,7 +639,7 @@ impl Launcher {
                 dl_path.push(library.to_pathbuf_file(false));
                 if File::open(dl_path.to_str().unwrap()).await.is_err() {
                     overall_size += artifact.size as usize;
-                    let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries");
+                    let _ = util::download_file(&artifact.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading libraries", false).await;
                     cnt += 1;
                 }
             }
@@ -405,15 +653,14 @@ impl Launcher {
                     let _ = std::fs::create_dir_all(&t_p);
                     if File::open(dl_path.to_str().unwrap()).await.is_err() {
                         overall_size += natives.size as usize;
-                        let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives");
+                        let _ = util::download_file(&natives.url, dl_path.to_str().unwrap(), sx.clone(), "Downloading natives", false).await;
                         cnt += 1;
                     }
                 }
             }
         }
 
-        let mut assets_path = root.clone();
-        assets_path.push("assets");
+        let assets_path = self.config.assets_path();
 
         let mut indexes = assets_path.clone();
         indexes.push("indexes");
@@ -424,15 +671,15 @@ impl Launcher {
         let _ = std::fs::create_dir_all(objects);
 
         let mut index = assets_path.clone();
-        index.push(config.assetIndex.to_path());
+        index.push(config.assetIndex.as_ref().unwrap().to_path());
 
-        let _ = util::download_file(&config.assetIndex.url, index.to_str().unwrap(), sx.clone(), "Downloading assets indexes");
+        let _ = util::download_file(&config.assetIndex.as_ref().unwrap().url.clone(), index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
         cnt += 1;
 
-        let asset_index = config.assetIndex.url;
+        let asset_index = config.assetIndex.as_ref().unwrap().url.clone();
 
-        overall_size += config.assetIndex.size as usize;
-        overall_size += config.assetIndex.totalSize as usize;
+        overall_size += config.assetIndex.as_ref().unwrap().size as usize;
+        overall_size += config.assetIndex.as_ref().unwrap().totalSize as usize;
 
         let assets = crate::minecraft::assets::fetch_assets_list(&asset_index).await.unwrap().objects;
 
@@ -445,7 +692,7 @@ impl Launcher {
             let _ = std::fs::create_dir_all(single_object_path);
 
             if File::open(single_object.to_str().unwrap()).await.is_err() {
-                let _ = util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects");
+                let _ = util::download_file(&asset.to_url(), single_object.to_str().unwrap(), sx.clone(), "Downloading assets objects", false).await;
                 cnt += 1;
             }
         }
@@ -466,19 +713,14 @@ impl Launcher {
 
     pub fn init_dirs(&self) {
         let root = self.config.launcher_dir();
-        std::fs::create_dir_all(&root);
+        let _ = std::fs::create_dir_all(&root);
         // instances assets libraries config.toml
-        let mut instances = root.clone();
-        instances.push("instances");
+        let instances = self.config.instances_path();
+        let assets = self.config.assets_path();
+        let libraries = self.config.libraries_path();
 
-        let mut assets = root.clone();
-        assets.push("assets");
-
-        let mut libraries = root.clone();
-        libraries.push("libraries");
-
-        std::fs::create_dir_all(&instances);
-        std::fs::create_dir_all(&assets);
-        std::fs::create_dir_all(&libraries);
+        let _ = std::fs::create_dir_all(&instances);
+        let _ = std::fs::create_dir_all(&assets);
+        let _ = std::fs::create_dir_all(&libraries);
     }
 }

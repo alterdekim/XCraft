@@ -49,6 +49,24 @@ impl LauncherConfig {
         }
     }
 
+    pub fn assets_path(&self) -> PathBuf {
+        let mut p = self.launcher_dir();
+        p.push("assets");
+        p
+    }
+
+    pub fn libraries_path(&self) -> PathBuf {
+        let mut p = self.launcher_dir();
+        p.push("libraries");
+        p
+    }
+
+    pub fn instances_path(&self) -> PathBuf {
+        let mut p = self.launcher_dir();
+        p.push("instances");
+        p
+    }
+
     pub fn config_path(&self) -> PathBuf {
         let mut p = self.launcher_dir();
         p.push("config.toml");

@@ -189,8 +189,8 @@
               </button>
               <p class="text-sm text-gray-500 mt-1">No installation required. Saves everything in a local folder.</p>
 
-              <button onclick="installMinecraft()"
-                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+              <button
+                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition cursor-not-allowed">
                   Install Minecraft
               </button>
               <p class="text-sm text-gray-500 mt-1">Installs Minecraft on your system for long-term use.</p>
@@ -230,7 +230,7 @@
               <div class="mt-4 text-gray-500 text-sm">or</div>
 
               <button 
-                  class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                  onclick="importMultiMcInstance()" class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
                   <i class="fa-solid fa-file-zipper"></i> Add MultiMC Instance
               </button>
 
@@ -596,6 +596,10 @@
                 $("#account-name").html(accountNick);
                 showSection(obj, 'appearance');
               }
+          }
+
+          function importMultiMcInstance() {
+            $.get("import_multimc", processParams);
           }
 
           function uploadSkin() {

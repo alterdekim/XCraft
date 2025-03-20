@@ -11,11 +11,11 @@ pub fn random_string(len: usize) -> String {
         .collect()
 }
 
-pub fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(usize, String)>, status: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(usize, String)>, status: &str, join: bool) -> Result<(), Box<dyn std::error::Error>> {
     let url = url.to_string();
     let file_path = file_path.to_string();
     let status = status.to_string();
-    tokio::spawn( async move {
+    let g = tokio::spawn( async move {
         if let Ok(mut res) = surf::get(url).await {
             let mut downloaded = 0;
             let mut buf = vec![0; 8192]; // Buffer for reading chunks
@@ -36,6 +36,9 @@ pub fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(usize,
             let _ = sender.send((0, status.clone()));
         }
     });
+    if join {
+        g.await;
+    }
     Ok(())
 }
 

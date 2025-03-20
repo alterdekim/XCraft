@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::Mutex;
 
 use launcher::Launcher;
@@ -37,7 +39,7 @@ impl ApplicationHandler for App {
   fn resumed(&mut self, event_loop: &ActiveEventLoop) {
     let window = event_loop.create_window(Window::default_attributes().with_inner_size(LogicalSize::new(900, 600)).with_min_inner_size(LogicalSize::new(900, 600)).with_title("XCraft")).unwrap();
     let webview = WebViewBuilder::new()
-      .with_asynchronous_custom_protocol("xcraft".into(), move |wid, request, responder| {
+      .with_asynchronous_custom_protocol("xcraft".into(), move |_wid, request, responder| {
           let uri = request.uri().to_string();
           if let Ok(msg) = serde_json::from_slice(request.body()) {
             let _ = SENDER.lock().unwrap().as_ref().unwrap().send((uri, Some(msg), responder));
@@ -118,6 +120,14 @@ async fn main() {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [ vec!["set_downloadable_versions".to_string()], versions ].concat() }).unwrap()));
                         } else {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: Vec::new() }).unwrap()));
+                        }
+                    }
+                    "import_multimc" => {
+                        if let Some(instance_path) = FileDialog::new().add_filter("Archive", &["zip"]).pick_file() {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["show_loading".to_string(), "sidebar_off".to_string()] }).unwrap()));
+                            if let Err(e) = launcher.import_multimc(instance_path, sx.clone()).await {
+                                println!("Error: {}", e);
+                            }
                         }
                     }
                     "download_vanilla" => {
