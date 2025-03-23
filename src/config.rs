@@ -33,7 +33,7 @@ pub struct LauncherConfig {
 
 impl Default for LauncherConfig {
     fn default() -> Self {
-        Self { is_portable: Default::default(), user_name: Default::default(), java_path: "java".to_string(), show_alpha: true, show_beta: true, show_snapshots: false, ram_amount: 1024, servers: Default::default(), enable_blur: Default::default(), allow_http: Default::default() }
+        Self { is_portable: Default::default(), user_name: Default::default(), java_path: "javaw".to_string(), show_alpha: true, show_beta: true, show_snapshots: false, ram_amount: 1024, servers: Default::default(), enable_blur: Default::default(), allow_http: Default::default() }
     }
 }
 
