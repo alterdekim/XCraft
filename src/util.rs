@@ -1,3 +1,7 @@
+use std::error::Error;
+
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use futures::AsyncReadExt;
 use rand::{distr::Alphanumeric, Rng};
 use tokio::{fs::File, io::AsyncWriteExt};
@@ -9,6 +13,12 @@ pub fn random_string(len: usize) -> String {
         .take(len)
         .map(char::from)
         .collect()
+}
+
+pub async fn get_image(url: &str) -> Result<String, Box<dyn Error + Send + Sync>> {
+    let bytes = surf::get(url).recv_bytes().await?;
+    let base64_string = BASE64_STANDARD.encode(&bytes);
+    Ok(format!("data:image/png;base64,{}", base64_string))
 }
 
 pub async fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(usize, String)>, status: &str, join: bool) -> Result<(), Box<dyn std::error::Error>> {

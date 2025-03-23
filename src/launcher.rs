@@ -152,6 +152,36 @@ impl Launcher {
         }
     }
 
+    pub async fn login_user_server(&mut self, server: String, username: String, password: String) -> (bool, &str) {
+        let mut session_server_port: u16 = 8999;
+        let mut server_port: u16 = 25565;
+        let mut domain = server.clone();
+        if let Some(index) = server.find("#") {
+            let (a,b) = server.split_at(index+1);
+            session_server_port = b.parse().unwrap();
+            domain = a[..a.len()-1].to_string();
+        }
+
+        if let Some(index) = domain.find(":") {
+            let dmc = domain.clone();
+            let (a,b) = dmc.split_at(index+1);
+            domain = a[..a.len()-1].to_string();
+            server_port = b.parse().unwrap();
+        }
+
+        println!("Server information: {}:{} session={}", domain, server_port, session_server_port);
+
+        match minecraft::session::try_login(domain.clone(), session_server_port, username.clone(), password.clone(), self.config.allow_http).await {
+            Ok(status) => match status {
+                SignUpResponse::ServerError => (false, "Internal server error"),
+                SignUpResponse::BadCredentials => (false, "Username or password is not valid"),
+                SignUpResponse::UserAlreadyExists => (false, "User already exists"),
+                SignUpResponse::Registered(uuid) => self.save_server_info(uuid, username, password, domain, session_server_port, server_port)
+            }
+            Err(_e) => (false, "Internal server error")
+        }
+    }
+
     pub async fn get_servers_list(&self) -> Vec<(String, String, Option<String>)> {
         let mut v = Vec::new();
         let servers = self.config.servers();

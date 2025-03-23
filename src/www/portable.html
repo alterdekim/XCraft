@@ -3,6 +3,7 @@
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src=" https://cdn.jsdelivr.net/npm/skinview3d@3.1.0/bundles/skinview3d.bundle.min.js "></script>
       <script src=" https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js "></script>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
       <script src="https://cdn.tailwindcss.com"></script>
@@ -14,13 +15,13 @@
   <body class="flex bg-gray-100 h-screen">
       <div id="sidebar" class="flex h-screen bg-white w-16 flex-col justify-between border-e border-gray-100 hidden">
           <div>
-            <div class="inline-flex size-16 items-center justify-center">
+            <!--<div class="inline-flex size-16 items-center justify-center">
               <a href="#" onclick="showAppearance(this)">
                 <span class="grid size-10 place-content-center rounded-lg bg-green-500 text-xs text-white">
                   Me
                 </span>
               </a>
-            </div>
+            </div>-->
         
             <div class="border-t border-gray-100">
               <div class="px-2">
@@ -179,7 +180,7 @@
               <p class="mt-4 text-sm text-gray-500">alterdekim</p>
           </div>
 
-          <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+          <div id="installation-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
               <h1 class="text-2xl font-semibold text-gray-700">Welcome to XCraft</h1>
               <p class="mt-2 text-gray-600">Choose how you want to set up Minecraft.</p>
 
@@ -317,44 +318,50 @@
               <p class="mt-4 text-sm text-gray-500">alterdekim</p>
           </div>
 
-          <div id="appearance-section" class="xsection bg-white shadow-lg rounded-xl p-6 w-96 text-center hidden">
-            <h2 class="text-2xl font-semibold text-gray-700">Account Settings</h2>
-            
-            <div class="mt-6 text-left">
-              <span class="text-gray-600 font-medium">Username:</span>
-              <span id="account-name" class="text-gray-600 font-medium"></span>
+          <div id="appearance-section" class="xsection flex">
+            <div>
+              <canvas id="skin_container"></canvas>
+            </div>
+            <div  class="bg-white shadow-lg rounded-xl p-6 w-96 text-center">
+              <h2 class="text-2xl font-semibold text-gray-700">Account Settings</h2>
+              
+              <div class="mt-6 text-left">
+                <span class="text-gray-600 font-medium">Username:</span>
+                <span id="account-name" class="text-gray-600 font-medium"></span>
+              </div>
+  
+              <!-- Skin Upload -->
+              <div class="mt-6 text-left">
+                  <label class="text-gray-600 font-medium">Minecraft Skin</label>
+                  <div class="mt-2 flex items-center gap-4">
+                      <button onclick="uploadSkin()" 
+                          class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
+                          Upload
+                      </button>
+                  </div>
+              </div>
+  
+              <div class="mt-6 text-left">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input id="slim-skin" type="checkbox" value="" class="sr-only peer">
+                  <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+                  <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Slim skin</span>
+                </label>
+              </div>
+      
+              <!-- Cape Upload -->
+              <div class="mt-6 text-left">
+                  <label class="text-gray-600 font-medium">Minecraft Cape</label>
+                  <div class="mt-2 flex items-center gap-4">
+                      <button onclick="uploadCape()" 
+                          class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
+                          Upload
+                      </button>
+                  </div>
+              </div>
+            </div>
           </div>
 
-            <!-- Skin Upload -->
-            <div class="mt-6 text-left">
-                <label class="text-gray-600 font-medium">Minecraft Skin</label>
-                <div class="mt-2 flex items-center gap-4">
-                    <button onclick="uploadSkin()" 
-                        class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
-                        Upload
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-6 text-left">
-              <label class="inline-flex items-center cursor-pointer">
-                <input id="slim-skin" type="checkbox" value="" class="sr-only peer">
-                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
-                <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Slim skin</span>
-              </label>
-            </div>
-    
-            <!-- Cape Upload -->
-            <div class="mt-6 text-left">
-                <label class="text-gray-600 font-medium">Minecraft Cape</label>
-                <div class="mt-2 flex items-center gap-4">
-                    <button onclick="uploadCape()" 
-                        class="bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
-                        Upload
-                    </button>
-                </div>
-            </div>
-          </div>
 
           <div id="accounts-section" class="xsection grid grid-cols-3 gap-4 p-6 w-fill hidden">
             
@@ -377,12 +384,19 @@
 
               <input id="server_password" type="password" placeholder="Password" class="mt-4 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
               <!-- Sign In Button -->
-              <button
-                  onclick="addServerInstance()"
-                  class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
-                  Add
-              </button>
-
+              
+              <div class="flex w-full">
+                <button
+                    onclick="addServerInstanceLogin()"
+                    class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">
+                    Login
+                </button>
+                <button
+                    onclick="addServerInstance()"
+                    class="ms-2 mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">
+                    Sign up
+                </button>
+              </div>
               <!-- Footer -->
               <p class="mt-4 text-sm text-gray-500">alterdekim</p>
           </div>
@@ -404,49 +418,62 @@
             for( let i = 0; i < params.length; i++ ) {
               if( params[i].startsWith("show_") ) {
                 showSection(undefined, params[i].substring(5));
-              } else if( params[i] == "sidebar_on" ) {
-                $("#sidebar").removeClass('hidden');
-              } else if( params[i] == "sidebar_off") {
-                $("#sidebar").addClass('hidden');
               }
 
-              if( params[i] == "show_add" ) {
-                showAddSection();
-              } else if( params[i] == "set_downloadable_versions" ) {
-                setDownloadableVersions(params.slice(i+1));
-                break;
-              } else if( params[i] == "update_downloads" ) {
-                  updateDownloads(params.slice(i+1));
+              switch(params[i]) {
+                case "sidebar_on":
+                  $("#sidebar").removeClass('hidden');
                   break;
-              } else if( params[i] == "show_instances") {
-                showInstancesSection();
-              } else if( params[i] == "set_instances_list" ) {
-                setInstancesList(params.slice(i+1));
-                break;
-              } else if( params[i] == "fetch_servers_list" ) {
-                setServersList(params.slice(i+1));
-                break;
-              } else if( params[i] == "locate_java" ) {
-                setJavaPath(params[i+1]);
-                break;
-              } else if( params[i] == "add_server_response" ) {
-                addServerResponse(params[i+1], params[i+2]);
-                break;
-              } else if( params[i] == "fetch_settings_response" ) {
-                setSettings(params.slice(i+1));
-                break;
-              } else if( params[i] == "load_screenshots" ) {
-                setScreenshots(params.slice(i+1));
-                break;
-              } else if( params[i] == "fetch_bg") {
-                setBackground(params[i+1]);
-                i++;
-              } else if( params[i] == "update_logs" ) {
-                updateLogs(params[i+1]);
-                break;
-              } else if( params[i] == "fetch_credentials_list" ) {
-                setCredentialsList(params.slice(i+1));
-                break;
+                case "sidebar_off":
+                  $("#sidebar").addClass('hidden');
+                  break;
+                case "show_add":
+                  showAddSection();
+                  break;
+                case "set_downloadable_versions":
+                  setDownloadableVersions(params.slice(i+1));
+                  return;
+                case "update_downloads":
+                  updateDownloads(params.slice(i+1));
+                  return;
+                case "show_instances":
+                  showInstancesSection();
+                  break;
+                case "set_instances_list":
+                  setInstancesList(params.slice(i+1));
+                  return;
+                case "fetch_servers_list":
+                  setServersList(params.slice(i+1));
+                  return;
+                case "locate_java":
+                  setJavaPath(params[i+1]);
+                  return;
+                case "add_server_response":
+                  addServerResponse(params[i+1], params[i+2]);
+                  return;
+                case "fetch_settings_response":
+                  setSettings(params.slice(i+1));
+                  return;
+                case "load_screenshots":
+                  setScreenshots(params.slice(i+1));
+                  return;
+                case "fetch_bg":
+                  setBackground(params[i+1]);
+                  return;
+                case "update_logs":
+                  updateLogs(params[i+1]);
+                  return;
+                case "fetch_credentials_list":
+                  setCredentialsList(params.slice(i+1));
+                  return;
+                case "get_skin":
+                  skinViewer.loadSkin(params[i+1]);
+                  return;
+                case "get_cape":
+                  skinViewer.loadCape(params[i+1]);
+                  return;
+                default:
+                  continue;
               }
             }
           }
@@ -547,6 +574,15 @@
 
           function addServerResponse(status, msg) {
             showPopup(msg);
+            updateSkinPreview();
+          }
+
+          function addServerInstanceLogin() {
+            let server = $("#server_address").val();
+            let username = $("#server_username").val();
+            let password = $("#server_password").val();
+
+            $.post({url: "add_server_login", data: JSON.stringify({ params: [server, username, password] }) }, processParams);
           }
 
           function addServerInstance() {
@@ -574,9 +610,9 @@
             for( let i = 0; i < params.length; i+=3 ) {
                let instance = `<div onclick="runInstance('`+params[i]+`')" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
             <img src="`+params[i+2]+`" class="w-12 h-12 rounded-full">
-            <div class="h-fill ms-2">
-              <h2 class="text-lg font-semibold">` + params[i+1] + `</h2>
-              <h2 class="text-sm font-semibold">` + params[i] + `</h2>
+            <div class="h-fill ms-2 w-32">
+              <h2 class="text-sm font-semibold truncate">` + params[i+1] + `</h2>
+              <h2 class="text-xs font-semibold truncate">` + params[i] + `</h2>
             </div>
           </div>`;
               $("#instances-section").append(instance);
@@ -591,9 +627,15 @@
             accountDomain = domain;
           }
 
+          function updateSkinPreview() {
+            $.post({url: "get_skin", data: JSON.stringify({ params: [accountNick, accountDomain] })}, processParams);
+            $.post({url: "get_cape", data: JSON.stringify({ params: [accountNick, accountDomain] })}, processParams);
+          }
+
           function showAppearance(obj) {
               if( accountNick != undefined && accountDomain != undefined ) {
                 $("#account-name").html(accountNick);
+                updateSkinPreview();
                 showSection(obj, 'appearance');
               }
           }
@@ -616,10 +658,10 @@
                 if( i == 0 && params.length >= 2 ) {
                   setAccount(params[i+1], params[i]);
                 }
-                let instance = `<div onclick="setAccount('`+params[i+1]+`', '`+params[i]+`')" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
-                  <div class="h-fill ms-2">
-                    <h2 class="text-lg font-semibold">`+params[i+1]+`</h2>
-                    <h2 class="text-sm font-semibold">`+params[i]+`</h2>
+                let instance = `<div onclick="setAccount('`+params[i+1]+`', '`+params[i]+`'); showAppearance()" class="bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
+                  <div class="h-fill ms-2 w-32">
+                    <h2 class="text-sm font-semibold truncate">`+params[i+1]+`</h2>
+                    <h2 class="text-xs font-semibold truncate">`+params[i]+`</h2>
                   </div>
                 </div>`;
                 $("#accounts-section").append(instance);
@@ -631,9 +673,9 @@
               for( let i = 0; i < params.length; i+=3) {
                 let instance = `<div onclick="runServerConnection('`+params[i]+`', '`+params[i+1]+`')" class="server-instance bg-white cursor-pointer hover:bg-green-500 hover:text-white shadow-lg rounded-xl w-48 h-24 flex justify-center items-center">
               <img src="`+params[i+2]+`" class="w-12 h-12 rounded-full">
-              <div class="h-fill ms-2">
-                <h2 class="text-lg font-semibold">`+params[i]+`</h2>
-                <h2 class="text-sm font-semibold">`+params[i+1]+`</h2>
+              <div class="h-fill ms-2 w-32">
+                <h2 class="text-sm font-semibold truncate">`+params[i]+`</h2>
+                <h2 class="text-xs font-semibold truncate">`+params[i+1]+`</h2>
               </div>
             </div>`;
                 $("#servers-section").append(instance);
@@ -732,6 +774,8 @@
               $("#"+section+"-section").removeClass('hidden');
           }
 
+          var skinViewer = undefined;
+
           $( document ).ready(async function() {
             $.get("check_installation", processParams);
             $.get("fetch_settings", processParams);
@@ -741,6 +785,15 @@
             $('#slim-skin').on('change', function () {
                 $.post({ url: "set_skin_model", data: JSON.stringify({ params: [accountNick, accountDomain, $(this).is(':checked')+""] }) }, processParams);
             });
+
+            skinViewer = new skinview3d.SkinViewer({
+                canvas: document.getElementById("skin_container"),
+                width: 300,
+                height: 400,
+                skin: "img/skin.png"
+            });
+
+            skinViewer.autoRotate = true;
 
             setInterval(function() {
                 if( !$("#loading-section").hasClass("hidden") ) {

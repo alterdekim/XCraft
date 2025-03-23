@@ -159,16 +159,41 @@ async fn main() {
 
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: v }).unwrap()));
                     }
+                    "get_skin" => {
+                        let params = params.unwrap().params;
+                        let nickname = params[0].clone();
+                        let domain = params[1].clone();
+                        if let Some(server) = launcher.find_credentials(&nickname, &domain) {
+                            let resp = util::get_image(&["http", if launcher.config.allow_http { "" } else { "s" }, "://", &domain, ":", &server.session_server_port.to_string(), "/api/skin/s", &server.credentials.uuid].concat()).await;
+                            if let Ok(resp) = resp {
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["get_skin".to_string(), resp] }).unwrap()));
+                            }
+                        }
+                    }
+                    "get_cape" => {
+                        let params = params.unwrap().params;
+                        let nickname = params[0].clone();
+                        let domain = params[1].clone();
+                        if let Some(server) = launcher.find_credentials(&nickname, &domain) {
+                            let resp = util::get_image(&["http", if launcher.config.allow_http { "" } else { "s" }, "://", &domain, ":", &server.session_server_port.to_string(), "/api/cape/a", &server.credentials.uuid].concat()).await;
+                            if let Ok(resp) = resp {
+                                responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["get_cape".to_string(), resp] }).unwrap()));
+                            }
+                        }
+                    }
                     "upload_skin" => {
                         let params = params.unwrap().params;
                         if let Some(server) = launcher.find_credentials(&params[0], &params[1]) {
                             if let Some(skin_path) = FileDialog::new().add_filter("Images", &["png"]).pick_file() {
                                 
                                 let msg = launcher.upload_skin(skin_path, &server.credentials.uuid, &server.credentials.password, &[if launcher.config.allow_http {"http"} else {"https"}, "://", &server.domain, ":", &server.session_server_port.to_string(), "/api/upload"].concat()).await;
-                                if let Ok(msg) = msg {
-                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), msg] }).unwrap()));
-                                } else {
-                                    responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), "Error uploading new skin".to_string()] }).unwrap()));
+                                match msg {
+                                    Ok(msg ) => {
+                                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), msg] }).unwrap()));
+                                    },
+                                    Err(_e) => {
+                                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), String::new(), "Error uploading new skin".to_string()] }).unwrap()));
+                                    }
                                 }
                             }
                         }
@@ -257,6 +282,11 @@ async fn main() {
                         } else {
                             // todo: implement error notifications
                         }
+                    }
+                    "add_server_login" => {
+                        let params = &params.unwrap().params;
+                        let (status, msg) = launcher.login_user_server(params[0].clone(), params[1].clone(), params[2].clone()).await;
+                        responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["add_server_response".to_string(), status.to_string(), msg.to_string()] }).unwrap()));
                     }
                     "add_server" => {
                         let params = &params.unwrap().params;
