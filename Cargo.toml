@@ -2,6 +2,7 @@
 name = "CraftX"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
 winit = "0.30.9"
@@ -23,6 +24,9 @@ env_logger = "0.11.7"
 toml = "0.8.20"
 nicotine = { git = "https://gitea.awain.net/alterwain/Nicotine.git", version = "0.1.22" }
 rfd = "0.14"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
 
 [profile.release]
 strip = true

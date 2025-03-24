@@ -307,6 +307,8 @@ async fn main() {
                         p.push("bg.base64");
                         if let Ok(data) = std::fs::read(p) {
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_bg".to_string(), String::from_utf8(data).unwrap()] }).unwrap()));
+                        } else if let Ok(Some(data)) = launcher::get_random_bg().await {
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["fetch_bg".to_string(), data] }).unwrap()));
                         }
                     }
                     "update_settings" => {

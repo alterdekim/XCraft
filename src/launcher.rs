@@ -4,6 +4,11 @@ use std::io::Cursor;
 use std::path::PathBuf;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use rand::rngs::StdRng;
+use rand::seq::IndexedRandom;
+use rand::SeedableRng;
+use serde::{Deserialize, Serialize};
+use surf::StatusCode;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -753,4 +758,24 @@ impl Launcher {
         let _ = std::fs::create_dir_all(&assets);
         let _ = std::fs::create_dir_all(&libraries);
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct BackgroundFiles {
+    name: String
+}
+
+pub async fn get_random_bg() -> Result<Option<String>, Box<dyn Error + Send + Sync>> {
+    let mut r = surf::get("https://minecraft.awain.net/xcraft/").await?;
+    if r.status() != StatusCode::Ok { return Ok(None); }
+    let resp = r.body_bytes().await?;
+    let resp: Vec<BackgroundFiles> = serde_json::from_slice(&resp)?;
+    let mut rng = StdRng::from_os_rng();
+    if let Some(resp) = resp.choose(&mut rng) {
+        let mut r = surf::get(["https://minecraft.awain.net/xcraft/", &resp.name].concat()).await?;
+        if r.status() != StatusCode::Ok { return Ok(None); }
+        let resp = r.body_bytes().await?;
+        return Ok(Some(["data:image/jpeg;base64,", &BASE64_STANDARD.encode(resp)].concat()));
+    }
+    Ok(None)
 }
