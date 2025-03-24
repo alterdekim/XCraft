@@ -21,6 +21,13 @@ pub async fn get_image(url: &str) -> Result<String, Box<dyn Error + Send + Sync>
     Ok(format!("data:image/png;base64,{}", base64_string))
 }
 
+pub async fn simple_download(url: &str, file_path: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let bytes = surf::get(url).recv_bytes().await?;
+    let mut f = File::create(file_path).await?;
+    f.write_all(&bytes).await?;
+    Ok(())
+}
+
 pub async fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(usize, String)>, status: &str, join: bool) -> Result<(), Box<dyn std::error::Error>> {
     let url = url.to_string();
     let file_path = file_path.to_string();

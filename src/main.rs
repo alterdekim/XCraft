@@ -344,8 +344,15 @@ async fn main() {
                     "check_updates" => {
                         // 
                         if let Ok(Some(file_url)) = launcher::check_updates().await {
-                            
                             responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["sidebar_off".to_string(), "show_loading".to_string(), "update_downloads".to_string(), "Updating launcher...".to_string(), "100".to_string()] }).unwrap()));
+                            let current_exe = std::env::current_exe().unwrap();
+                            let mut downloaded_file = std::env::current_dir().unwrap();
+                            downloaded_file.push("launcher_new.exe");
+                            util::simple_download(&file_url, downloaded_file.to_str().unwrap()).await.unwrap();
+                            let _ = std::fs::rename(&current_exe, "old_launcher.bak");
+                            let _ = std::fs::rename(downloaded_file, current_exe);
+                            let _ = std::fs::remove_file("old_launcher.bak");
+                            std::process::exit(0);
                         }
                     }
                     _ => {}
