@@ -82,6 +82,9 @@ async fn main() {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
                 let ui_action = &ui_action[16..];
                 match ui_action {
+                    "github" => {
+                        Command::new("cmd").args(["/C", "start", "https://github.com/alterdekim/XCraft"]).spawn().unwrap();
+                    },
                     "jquery" => responder.respond(Response::new(include_bytes!("js/jquery.js"))),
                     "skinview3d" => responder.respond(Response::new(include_bytes!("js/skinview3d.js"))),
                     "tailwind" => responder.respond(Response::new(include_bytes!("js/tailwind.js"))),
@@ -337,6 +340,13 @@ async fn main() {
                             svec.push(data);
                         }
                         responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: [vec!["load_screenshots".to_string()], svec].concat() }).unwrap()));
+                    }
+                    "check_updates" => {
+                        // 
+                        if let Ok(Some(file_url)) = launcher::check_updates().await {
+                            
+                            responder.respond(Response::new(serde_json::to_vec(&UIMessage { params: vec!["sidebar_off".to_string(), "show_loading".to_string(), "update_downloads".to_string(), "Updating launcher...".to_string(), "100".to_string()] }).unwrap()));
+                        }
                     }
                     _ => {}
                 }

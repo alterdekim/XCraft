@@ -779,3 +779,23 @@ pub async fn get_random_bg() -> Result<Option<String>, Box<dyn Error + Send + Sy
     }
     Ok(None)
 }
+
+#[derive(Serialize, Deserialize)]
+struct RemoteRelease {
+    tag_name: String,
+    assets: Vec<RemoteAsset>
+}
+
+#[derive(Serialize, Deserialize)]
+struct RemoteAsset {
+    browser_download_url: String
+}
+
+pub async fn check_updates() -> Result<Option<String>, Box<dyn Error + Send + Sync>> {
+    let mut r = surf::get("https://gitea.awain.net/api/v1/repos/alterwain/XCraft/releases/latest").await?;
+    let release: RemoteRelease = r.body_json().await?;
+    if release.tag_name != env!("CARGO_PKG_VERSION") && !release.assets.is_empty() {
+        return Ok(Some(release.assets[0].browser_download_url.clone()));
+    }
+    Ok(None)
+}
