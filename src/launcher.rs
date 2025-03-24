@@ -301,7 +301,7 @@ impl Launcher {
 
         if let Ok(data) = std::fs::read(&instances) {
             let config: VersionConfig = serde_json::from_slice(&data).unwrap();
-            minecraft_arguments = Some(config.minecraftArguments);
+            minecraft_arguments = Some(config.minecraft_arguments);
             let mut libraries_cmd = Vec::new();
             for library in config.libraries {
                 if let Some(classifier) = &library.downloads.classifiers {
@@ -330,7 +330,7 @@ impl Launcher {
             }
             libraries_cmd.push(client_jar.to_str().unwrap().to_string());
             cmd.arg(libraries_cmd.concat());
-            cmd.arg(config.mainClass.clone());
+            cmd.arg(config.main_class.clone());
 
             let mut game_dir = self.config.instances_path();
             game_dir.push(&instance_name);
@@ -346,7 +346,7 @@ impl Launcher {
                     "${version_name}" => &instance_name,
                     "${game_directory}" => game_dir.to_str().unwrap(),
                     "${assets_root}" => assets_dir.to_str().unwrap(),
-                    "${assets_index_name}" => &config.assetIndex.as_ref().unwrap().id,
+                    "${assets_index_name}" => &config.asset_index.as_ref().unwrap().id,
                     "${auth_uuid}" => &uuid,
                     "${auth_access_token}" => &token,
                     "${user_properties}" => "{}",
@@ -423,8 +423,8 @@ impl Launcher {
         let mut minecraft_config = None;
         let mut forge_version = None;
 
-        for component in pack_mmc.components.iter().filter(|c| c.cachedName.is_some()) {
-            match component.cachedName.as_ref().unwrap().as_str() {
+        for component in pack_mmc.components.iter().filter(|c| c.cached_name.is_some()) {
+            match component.cached_name.as_ref().unwrap().as_str() {
                 "Minecraft" => minecraft_config = Some(crate::minecraft::versions::find_version_object(&component.version).await?),
                 "Forge" => {
                     forge_version = Some(component.version.clone());
@@ -502,15 +502,15 @@ impl Launcher {
             let _ = std::fs::create_dir_all(objects);
 
             let mut index = assets_path.clone();
-            index.push(config.assetIndex.as_ref().unwrap().to_path());
+            index.push(config.asset_index.as_ref().unwrap().to_path());
 
-            let _ = util::download_file(&config.assetIndex.as_ref().unwrap().url, index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
+            let _ = util::download_file(&config.asset_index.as_ref().unwrap().url, index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
             cnt += 1;
 
-            let asset_index = config.assetIndex.as_ref().unwrap().url.clone();
+            let asset_index = config.asset_index.as_ref().unwrap().url.clone();
 
-            overall_size += config.assetIndex.as_ref().unwrap().size as usize;
-            overall_size += config.assetIndex.as_ref().unwrap().totalSize as usize;
+            overall_size += config.asset_index.as_ref().unwrap().size as usize;
+            overall_size += config.asset_index.as_ref().unwrap().total_size as usize;
 
             let assets = crate::minecraft::assets::fetch_assets_list(&asset_index).await.unwrap().objects;
 
@@ -574,8 +574,8 @@ impl Launcher {
             let version_json: VersionConfig = serde_json::from_slice(&version_json)?;
 
             let mut edited = minecraft_config.clone().unwrap();
-            edited.mainClass = version_json.mainClass.clone();
-            edited.minecraftArguments = version_json.minecraftArguments;
+            edited.main_class = version_json.main_class.clone();
+            edited.minecraft_arguments = version_json.minecraft_arguments;
             edited.libraries.retain(|l| !version_json.libraries.iter().any(|t| t.name == l.name));
             for i in 0..version_json.libraries.len() {
                 edited.libraries.push(version_json.libraries[i].clone());
@@ -706,15 +706,15 @@ impl Launcher {
         let _ = std::fs::create_dir_all(objects);
 
         let mut index = assets_path.clone();
-        index.push(config.assetIndex.as_ref().unwrap().to_path());
+        index.push(config.asset_index.as_ref().unwrap().to_path());
 
-        let _ = util::download_file(&config.assetIndex.as_ref().unwrap().url.clone(), index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
+        let _ = util::download_file(&config.asset_index.as_ref().unwrap().url.clone(), index.to_str().unwrap(), sx.clone(), "Downloading assets indexes", false).await;
         cnt += 1;
 
-        let asset_index = config.assetIndex.as_ref().unwrap().url.clone();
+        let asset_index = config.asset_index.as_ref().unwrap().url.clone();
 
-        overall_size += config.assetIndex.as_ref().unwrap().size as usize;
-        overall_size += config.assetIndex.as_ref().unwrap().totalSize as usize;
+        overall_size += config.asset_index.as_ref().unwrap().size as usize;
+        overall_size += config.asset_index.as_ref().unwrap().total_size as usize;
 
         let assets = crate::minecraft::assets::fetch_assets_list(&asset_index).await.unwrap().objects;
 

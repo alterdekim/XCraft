@@ -47,7 +47,7 @@ pub async fn download_file(url: &str, file_path: &str, sender: UnboundedSender<(
         }
     });
     if join {
-        g.await;
+        let _ = g.await;
     }
     Ok(())
 }

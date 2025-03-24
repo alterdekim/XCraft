@@ -82,6 +82,9 @@ async fn main() {
             if let Some((ui_action, params, responder)) = receiver.recv().await {
                 let ui_action = &ui_action[16..];
                 match ui_action {
+                    "jquery" => responder.respond(Response::new(include_bytes!("js/jquery.js"))),
+                    "skinview3d" => responder.respond(Response::new(include_bytes!("js/skinview3d.js"))),
+                    "tailwind" => responder.respond(Response::new(include_bytes!("js/tailwind.js"))),
                     "ui" => responder.respond(Response::new(include_bytes!("www/portable.html"))),
                     "portable" => {
                         launcher.config.set_portable(true);

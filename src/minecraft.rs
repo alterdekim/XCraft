@@ -16,9 +16,11 @@ pub mod versions {
         pub r#type: String,
         pub url: String,
         pub time: String,
-        pub releaseTime: String,
+        #[serde(rename = "releaseTime")]
+        pub release_time: String,
         pub sha1: String,
-        pub complianceLevel: u8
+        #[serde(rename = "complianceLevel")]
+        pub compliance_level: u8
     }
 
     #[derive(Serialize, Deserialize)]
@@ -29,9 +31,12 @@ pub mod versions {
 
     #[derive(Serialize, Deserialize, Clone)]
     pub struct VersionConfig {
-        pub assetIndex: Option<ConfigAssetIndex>,
-        pub mainClass: String,
-        pub minecraftArguments: String,
+        #[serde(rename = "assetIndex")]
+        pub asset_index: Option<ConfigAssetIndex>,
+        #[serde(rename = "mainClass")]
+        pub main_class: String,
+        #[serde(rename = "minecraftArguments")]
+        pub minecraft_arguments: String,
         pub downloads: Option<ConfigDownloads>,
         pub id: String,
         pub r#type: String,
@@ -127,7 +132,8 @@ pub mod versions {
     pub struct ConfigAssetIndex {
         pub id: String,
         pub sha1: String,
-        pub totalSize: u64,
+        #[serde(rename = "totalSize")]
+        pub total_size: u64,
         pub size: u64,
         pub url: String
     }
@@ -238,7 +244,8 @@ pub mod multimc {
 
     #[derive(Serialize, Deserialize)]
     pub struct Component {
-        pub cachedName: Option<String>,
+        #[serde(rename = "cachedName")]
+        pub cached_name: Option<String>,
         pub version: String,
         pub uid: String,
     }
