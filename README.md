@@ -5,6 +5,14 @@ A Modern Minecraft Launcher
 
 #
 
+<div align="center">
+    <img src="https://w0n.zip/file/Xe0zXb">
+    <p>
+        <small>
+            Screenshot from Windows 10
+        </small>
+    </p>
+</div>
 
 XCraft is a custom Minecraft launcher written in Rust, designed to provide enhanced flexibility and customization. It supports a custom online mode, skin and cape editing, and seamless integration with MultiMC instances.
 
