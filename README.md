@@ -1,4 +1,10 @@
-# XCraft - A Modern Minecraft Launcher
+<img align="left" width="100" height="100" src="https://w0n.zip/file/bWJVJa">
+
+### XCraft
+A Modern Minecraft Launcher
+
+#
+
 
 XCraft is a custom Minecraft launcher written in Rust, designed to provide enhanced flexibility and customization. It supports a custom online mode, skin and cape editing, and seamless integration with MultiMC instances.
 
@@ -13,8 +19,8 @@ XCraft is a custom Minecraft launcher written in Rust, designed to provide enhan
 ## Installation
 
 ### Download Stable Build
-You can download the latest stable build of XCraft from our Jenkins CI server:
-[Download from Jenkins](https://jenkins.awain.net/job/XCraft/lastStableBuild/).
+You can download the latest stable build of XCraft from releases section:
+[Download from Gitea](https://gitea.awain.net/alterwain/XCraft/releases/latest).
 
 ### Build from Source
 
@@ -42,6 +48,7 @@ To make your Minecraft server compatible with XCraft, install the [**XCraftAuth*
 
 ## Roadmap
 - [ ] Cross-platform support improvements
+- [ ] Fabric integration
 
 ## License
 This project is licensed under the MIT License.
