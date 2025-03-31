@@ -38,7 +38,7 @@ struct App {
 impl ApplicationHandler for App {
   fn resumed(&mut self, event_loop: &ActiveEventLoop) {
     let window = event_loop.create_window(Window::default_attributes().with_inner_size(LogicalSize::new(900, 600)).with_min_inner_size(LogicalSize::new(900, 600)).with_title("XCraft")).unwrap();
-    let webview = WebViewBuilder::new()
+    let mut webview_builder = WebViewBuilder::new()
       .with_asynchronous_custom_protocol("xcraft".into(), move |_wid, request, responder| {
           let uri = request.uri().to_string();
           if let Ok(msg) = serde_json::from_slice(request.body()) {
@@ -47,9 +47,17 @@ impl ApplicationHandler for App {
           }
           let _ = SENDER.lock().unwrap().as_ref().unwrap().send((uri, None, responder));
       })
-      .with_url("xcraft://custom/ui")  
-      .build(&window)
-      .unwrap();
+      .with_url("xcraft://custom/ui");
+
+    if !cfg!(debug_assertions) {
+        webview_builder = webview_builder.with_initialization_script(r#"
+            document.addEventListener("contextmenu", event => event.preventDefault());
+        "#);
+    }
+
+    let webview = webview_builder
+        .build(&window)
+        .unwrap();
 
     self.window = Some(window);
     self.webview = Some(webview);
